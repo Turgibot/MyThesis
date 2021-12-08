@@ -19,10 +19,12 @@
         <material name="tile" texture="floor_tile" specular="0" shininess="0" reflectance="0" emission="1" />
         <material name="black" specular="1" shininess="1" reflectance="1" rgba="0.08 0.08 0.08 1" emission="1" />
         <material name="gray" specular="1" shininess="1" reflectance="1" rgba="0.1 0.1 0.1 1" emission="1" />
+        <material name="dark_gray" specular="1" shininess="1" reflectance="1" rgba="0.13 0.2 0.25 1" emission="1" />
         <material name="white" specular="1" shininess="1" reflectance="1" rgba="1 1 1 1" emission="1" />
 
         <texture name="foam_blocks" file="meshes/foam_blocks.png" width="1994" height="1884" type="2d"/>
         <material name="foam" texture="foam_blocks" specular="0" shininess="0" reflectance="0" emission="1" />
+        <texture type="skybox" builtin="gradient" rgb1="1 1 1" rgb2=".6 .8 1" width="256" height="256"/>
     </asset>
 
     <contact>
@@ -35,10 +37,9 @@
 
     <worldbody>
         
-        <camera fovy="45" pos="1 1 2" />
-        
+        <camera fovy="45" pos="1 1 50" />
         <body name="target" pos="0 0 -0.15" mocap="true">
-            <geom name="target" type="sphere" size="0.04" rgba="0 1 0 .5"/>
+            <geom name="target" type="sphere" size="0.04" rgba="1 0 0 .5"/>
         </body>
         
         <body name="hand" pos="0 0 0" mocap="true"/>
@@ -49,17 +50,17 @@
         <light pos="0 1 1" dir="0 -1 -1" diffuse="1 1 1"/>
 
         <body name="base_link" pos="0 0 0">
-            <geom name="link0" type="mesh" mesh="Base" pos="0 0 0" material="black"/>
+            <geom name="link0" type="mesh" mesh="Base" pos="0 0 0" material="dark_gray"/>
             <inertial pos="0 0 0" mass="1.226" diaginertia="0.25 0.25 0.25"/>
             
             <body name="link1" pos="0 0 0.067">
             <joint name='joint0' pos="0 0 0" axis="0 0 1" ref="1.5708"/>
-            <geom name="link1" type="mesh" mesh="Shoulder" pos="0 0 0" material="black"/>
+            <geom name="link1" type="mesh" mesh="Shoulder" pos="0 0 0" material="dark_gray"/>
             <inertial pos="0 0 0" mass="0.798614" diaginertia="0.3 0.3 0.3"/>
             
                 <body name="link2" pos="0 0.0005 0.045">
                     <joint name='joint1' pos="0 -0.0008 0.0058" axis="1 0 0"/>
-                    <geom name="link2" type="mesh" mesh="Link1" pos="0 0 0" euler="1.5708 0 0" material="black"/>
+                    <geom name="link2" type="mesh" mesh="Link1" pos="0 0 0" euler="1.5708 0 0" material="dark_gray"/>
                     <geom name="N" type="mesh" mesh="N" pos="0 0.005 0.24" euler="-1.5708 0 0" material="white"/>
                     <geom name="B" type="mesh" mesh="B" pos="0 0.010 0.0025"   euler="1.5708 0 0" material="white"/>
                     <geom name="E" type="mesh" mesh="E" pos="0 0.010 0.005"   euler="1.5708 0 0" material="white"/>
@@ -69,22 +70,22 @@
                     <body name="link3" pos="0 -0.057 0.3055">
                     <inertial pos="0 -0.0038 0.00" mass="0.322228" euler="1.5708 0 1.5708" diaginertia="0.275 0.275 0.275"/>
                     <joint name='joint2' pos="0 -0.0038 0.00" axis="1 0 0" ref="1.5708"/>
-                    <geom name="link3" type="mesh" mesh="Link2" pos="0 0 0" euler="1.5708 0 1.5708" material="black"/>
+                    <geom name="link3" type="mesh" mesh="Link2" pos="0 0 0" euler="1.5708 0 1.5708" material="dark_gray"/>
                     
                         <body name="link4" pos="0 -0.1995 0.0">
                         <inertial pos="0 -0.0038 0.00" mass="0.414823" euler="1.5708 0 1.5708" diaginertia="0.175 0.175 0.175"/>
                         <joint name='joint3' pos="0 -0.0038 0.00" axis="0 1 0" ref="-1.5708"/>
-                        <geom name="link4" type="mesh" mesh="Link3" pos="0 0 0" euler="1.5708 0 1.5708" material="black"/>
+                        <geom name="link4" type="mesh" mesh="Link3" pos="0 0 0" euler="1.5708 0 1.5708" material="dark_gray"/>
                     
                             <body name="link5" pos="0 -0.104 -0.005">
                                 <inertial pos="0.00 0.00 0.00475" mass="0.115395" euler="0 0 0" diaginertia="0.175 0.175 0.175"/>
                                 <joint name='joint4' pos="0.00 0.00 0.00475" axis="1 0 0" ref="0"/>
-                                <geom name="link5" type="mesh" mesh="Link4" pos="0 0 0" euler="0 0 0" material="black"/>
+                                <geom name="link5" type="mesh" mesh="Link4" pos="0 0 0" euler="0 0 0" material="dark_gray"/>
                                     
                                     <body name="link6" pos="0 0.0075 0.05525">
                                     <inertial pos="0 0 0" mass="0.1666" euler="-1.5708 0 0" diaginertia="0.025 0.025 0.025"/>
                                     <joint name='joint5' pos="0 0 0" axis="0 0 1" ref="0"/>
-                                    <geom name="link6" type="mesh" mesh="Gripper" pos="0 0 0" euler="-1.5708 0 0" material="gray"/>
+                                    <geom name="link6" type="mesh" mesh="Gripper" pos="0 0 0" euler="-1.5708 0 0" material="dark_gray"/>
                                 
                                     <body
                                         name="EE" pos="0 -0.0075 0.2" euler="1.5708 1.5708 1.5708">

@@ -33,7 +33,7 @@ import time
 from model import Model
 from OSC import OSC
 from utilities import euler_from_quaternion
-from adaptive_control import DynamicsAdaptation    
+# from adaptive_control import DynamicsAdaptation    
         
 class Simulation:
     
@@ -86,20 +86,20 @@ class Simulation:
         
         # Initialize adaptive controller
         self.adaptation = adapt
-        if adapt:          
-            self.adapt_controller = DynamicsAdaptation(
-                n_input           = 10,     # Applying adaptation to the first 5 joints, having 5 angles and 5 velocities
-                n_output          = 5,      # Retrieving 5 adaptive signals for the first 5 joints
-                n_neurons         = 5000,   # Number of neurons for neurons per ensemble
-                n_ensembles       = 5,      # Defining an ensemble for each retrived adaptive signals                             
-                pes_learning_rate = 1e-4,   # Learning rate for the PES online learning rule
-                means             = [       # Scaling the input signals with means / variances of expected values. 
-                                     0.12,  2.14,  1.87,  4.32, 0.59, 
-                                     0.12, -0.38, -0.42, -0.29, 0.36],
-                variances         = [
-                                     0.08, 0.6, 0.7, 0.3, 0.6, 
-                                     0.08, 1.4, 1.6, 0.7, 1.2]
-            )
+        # if adapt:          
+        #     self.adapt_controller = DynamicsAdaptation(
+        #         n_input           = 10,     # Applying adaptation to the first 5 joints, having 5 angles and 5 velocities
+        #         n_output          = 5,      # Retrieving 5 adaptive signals for the first 5 joints
+        #         n_neurons         = 5000,   # Number of neurons for neurons per ensemble
+        #         n_ensembles       = 5,      # Defining an ensemble for each retrived adaptive signals                             
+        #         pes_learning_rate = 1e-4,   # Learning rate for the PES online learning rule
+        #         means             = [       # Scaling the input signals with means / variances of expected values. 
+        #                              0.12,  2.14,  1.87,  4.32, 0.59, 
+        #                              0.12, -0.38, -0.42, -0.29, 0.36],
+        #         variances         = [
+        #                              0.08, 0.6, 0.7, 0.3, 0.6, 
+        #                              0.08, 1.4, 1.6, 0.7, 1.2]
+        #     )
            
     def visualize(self):
         """ visualizing the model with the initial configuration of the arm """
@@ -352,41 +352,41 @@ class Simulation:
     
     # Monitoring methods -------------------------------------------------------------------------
     
-    def show_monitor(self):
-        """ Display monitored motion and performance of the arm"""
+    # def show_monitor(self):
+    #     """ Display monitored motion and performance of the arm"""
         
-        import matplotlib.pyplot as plt
-        from mpl_toolkits.mplot3d import axes3d
+    #     import matplotlib.pyplot as plt
+    #     from mpl_toolkits.mplot3d import axes3d
 
-        # For each specified target 
-        for exp in self.monitor_dict:
+    #     # For each specified target 
+    #     for exp in self.monitor_dict:
 
-            # Plot EE convergence to target -------------------------------------------------------
-            print('Covering a distance of {}, with an error of: {}, in {} steps '.format(
-                np.sqrt(np.sum((self.monitor_dict[exp]['target_real'] - 
-                                self.monitor_dict[exp]['ee'][0])**2)), 
-                self.monitor_dict[exp]['error'][-1], 
-                self.monitor_dict[exp]['steps']))
-            plt.figure()
-            plt.ylabel("Distance (m)")
-            plt.xlabel("Time (ms)")
-            plt.title("Distance to target")
-            plt.plot(self.monitor_dict[exp]['error'])
-            plt.show()
+    #         # Plot EE convergence to target -------------------------------------------------------
+    #         print('Covering a distance of {}, with an error of: {}, in {} steps '.format(
+    #             np.sqrt(np.sum((self.monitor_dict[exp]['target_real'] - 
+    #                             self.monitor_dict[exp]['ee'][0])**2)), 
+    #             self.monitor_dict[exp]['error'][-1], 
+    #             self.monitor_dict[exp]['steps']))
+    #         plt.figure()
+    #         plt.ylabel("Distance (m)")
+    #         plt.xlabel("Time (ms)")
+    #         plt.title("Distance to target")
+    #         plt.plot(self.monitor_dict[exp]['error'])
+    #         plt.show()
             
-            # Plot EE trajectory ------------------------------------------------------------------
+    #         # Plot EE trajectory ------------------------------------------------------------------
 
-            ax = plt.figure().add_subplot(111, projection='3d')
-            ee_x = [ee[0] for ee in self.monitor_dict[exp]['ee']]
-            ee_y = [ee[1] for ee in self.monitor_dict[exp]['ee']]
-            ee_z = [ee[2] for ee in self.monitor_dict[exp]['ee']]
+    #         ax = plt.figure().add_subplot(111, projection='3d')
+    #         ee_x = [ee[0] for ee in self.monitor_dict[exp]['ee']]
+    #         ee_y = [ee[1] for ee in self.monitor_dict[exp]['ee']]
+    #         ee_z = [ee[2] for ee in self.monitor_dict[exp]['ee']]
 
-            ax.set_title("End-Effector Trajectory")
-            ax.plot(ee_x, ee_y, ee_z)
+    #         ax.set_title("End-Effector Trajectory")
+    #         ax.plot(ee_x, ee_y, ee_z)
 
-            ax.scatter(self.monitor_dict[exp]['target_real'][0], self.monitor_dict[exp]['target_real'][1], 
-                       self.monitor_dict[exp]['target_real'][2], label="target", c="r")
-            ax.legend()   
+    #         ax.scatter(self.monitor_dict[exp]['target_real'][0], self.monitor_dict[exp]['target_real'][1], 
+    #                    self.monitor_dict[exp]['target_real'][2], label="target", c="r")
+    #         ax.legend()   
         
 
 
