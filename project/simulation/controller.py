@@ -18,7 +18,7 @@ class Control:
         self.model = robot.model
         self.simulation = simulation
 
-        self.FK(thetalist= np.array([0, 0, 0, 0, np.pi/2, 0])
+        self.FK(thetalist= np.array([-np.pi/2, 0, np.pi/6, 0, np.pi/6, 0])
 )
 
 # -----------------------------------------------------------------------------

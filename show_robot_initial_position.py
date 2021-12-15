@@ -9,12 +9,12 @@ def main():
     scene = Mujocoation(xml_path)
     robot = Robot(scene.model, scene.simulation)
     controller = Control(robot, scene.simulation)
-    thetas = np.array([0, 0, 0, 0, np.pi/2, 0])
+    thetas = np.array([-np.pi/2, 0, np.pi/6, 0, np.pi/6, 0])
     scene.simulation.data.qpos[:] = thetas
     scene.simulation.forward()
     
     print(robot.get_links_positions())
-    scene.advance_once()
+    # scene.advance_once()
 
 if __name__== "__main__":
     main()
