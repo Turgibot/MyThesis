@@ -38,14 +38,14 @@
     <worldbody>
         
         <camera fovy="45" pos="1 1 50" />
-        <body name="target" pos="0 0 -0.15" mocap="true">
+        <body name="target" pos="0 0 5" mocap="true">
             <geom name="target" type="sphere" size="0.04" rgba="1 0 0 .5"/>
         </body>
         
         <body name="hand" pos="0 0 0" mocap="true"/>
-        <geom name="floor_foam_block" pos="0 0 0" size="0.5 0.5 0.05" type="plane" rgba="1 0.83 0.61 1" material="foam"/>
-        <geom type="box" size=".02 .04 .06" rgba="0 .9 0 .5" contype="2"/>
-        <geom name="floor_grey_tile" pos="0 0 -0.001" size="0.7 0.7 0.05" type="plane" material="tile"/>
+        <geom name="floor_foam_block" euler="0 0 1.5708" pos="0 0 0" size="0.5 0.5 0.05" type="plane" rgba="1 0.83 0.61 1" material="foam"/>
+        
+        <geom name="floor_grey_tile" pos="0 0 -0.001"  size="0.7 0.7 0.05" type="plane" material="tile"/>
 
         <light pos="0 1 1" dir="0 -1 -1" diffuse="1 1 1"/>
 
@@ -59,7 +59,7 @@
             <inertial pos="0 0 0" mass="0.798614" diaginertia="0.3 0.3 0.3"/>
             
                 <body name="link2" pos="0 0.0005 0.045">
-                    <joint name='joint1' pos="0 -0.0008 0.0058" axis="1 0 0"/>
+                    <joint name='joint1' pos="0 -0.0008 0.0058" axis="1 0 0" />
                     <geom name="link2" type="mesh" mesh="Link1" pos="0 0 0" euler="1.5708 0 0" material="dark_gray"/>
                     <geom name="N" type="mesh" mesh="N" pos="0 0.005 0.24" euler="-1.5708 0 0" material="white"/>
                     <geom name="B" type="mesh" mesh="B" pos="0 0.010 0.0025"   euler="1.5708 0 0" material="white"/>

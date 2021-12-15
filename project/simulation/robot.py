@@ -17,22 +17,45 @@ import mujoco_py as mjc
 
 class Robot:
     def __init__(self,
-                scene,                         # The mujoco model scene generated from the xml
-                target_coor         = None,    # List of target coordinated in reference to the world frame
-                min_dist            = 2e-2,    # The minimal distance at which a successful target reaching is achieved
-                time_step           = 0.01,    # Simulation time step
-                n_gripper_joints    = 0,       # Number of actuated gripping points
-                external_force      = None,    # External force field (implemented with scaled gravity)
-                adapt               = False    # Using adaptive controller
+                model,      # The mujoco xml generated model
+                simulation, # The mujoco simulation object
+                home_configuration = [-np.pi/2, 0, np.pi/2, 0, np.pi/2, 0]
                 ):
-        self.model = scene.model
-        self.target_coor = target_coor     
-        self.min_dist = min_dist        
-        self.time_step = time_step       
-        self.n_gripper_joints = n_gripper_joints
-        self.external_force = external_force  
-        self.adapt = adapt 
-        self.simulation = mjc.MjSim(self.model)
+        self.model = model
+        self.simulation = simulation
+        self.home = np.array(home_configuration)
+        self.zero_config()
+        self.n_joints = 6
+        self.thetas = self.simulation.data.qpos 
+        self.thetas_dot = self.simulation.data.qvel
+        self.ee_config = self.get_ee_config()
+        self.torques = self.simulation.data.ctrl
+        s0 = [0, 0, 1, 0, 0, 0]
+        s1 = [0, -1, 0, 0.112, 0, 0]
+        s2 = [0, -1, 0, 0.413, 0, 0]
+        s3 = [0, 0, -1, -0.06, 0, 0]
+        s4 = [-1, 0, 0, 0, -0.71686502, 0]
+        s5 = [0, -1, 0, -0.71686502, 0, 0]
+        self.Slist =np.array([s0, s1, s2, s3, s4, s5]).T 
+
+        self.M = [  [0,  0, -1, -0.05808434],
+                    [-1, 0,  0, -0.25024979],
+                    [0,  1,  0, 0.71686502],
+                    [0,  0,  0, 1]]
+        
+    def go_home(self):
+        self.simulation.data.qpos[:] = self.home
+        self.simulation.forward()
+    def zero_config(self):
+        thetas = np.array([0, 0, 0, 0, 0, 0])
+        self.simulation.data.qpos[:] = thetas
+        self.simulation.forward()
+
+    def read(self):
+        self.thetas = self.simulation.data.qpos
+        self.thetas_dot = self.simulation.data.qvel
+        self.ee_config = self.get_ee_config()
+        self.torques = self.simulation.data.ctrl
 
     def get_ee_position(self):
         """ Retrieve the position of the End Effector (EE) """
@@ -64,6 +87,14 @@ class Robot:
         quat_target  = self.simulation.data.get_body_xquat("target")
         euler_angles = euler_from_quaternion(quat_target)
         return np.hstack([np.copy(xyz_target), np.copy(euler_angles)])
+    
+    def get_ee_config(self):
+        """ Returns the position and orientation of the target """
+        
+        xyz = self.simulation.data.get_body_xpos("EE")
+        quat  = self.simulation.data.get_body_xquat("EE")
+        euler_angles = euler_from_quaternion(quat)
+        return np.hstack([np.copy(xyz), np.copy(euler_angles)])
     
     def get_jacobian(self):
         """ Returns the Jacobian of the arm (from the perspective of the EE) """
@@ -118,8 +149,14 @@ class Robot:
 
     def get_inverse_jacobian(self):
         jac = self.get_jacobian()
-        try:
-            return np.linalg.inv(jac)
-        except:
-            print("singualrity")
-            return np.ones_like(jac)
+        return np.linalg.pinv(jac)
+       
+
+
+    def get_links_positions(self):
+        pos_dict = {}
+        names = ['base_link', 'link1', 'link2', 'link3', 'link4', 'link5', 'link6', 'EE']
+        for name in names:
+            pos = self.simulation.data.get_body_xpos(name)
+            pos_dict[name]=pos
+        return pos_dict

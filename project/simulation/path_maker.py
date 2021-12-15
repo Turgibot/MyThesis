@@ -15,15 +15,13 @@ import numpy as np
 from .robot import Robot
 from .utilities import *
 import mujoco_py as mjc
-from .controller import PID
 
 class Path:
     def __init__(self, scene):
         
-        self.data = Robot(scene)
-        self.model = self.data.model
-        self.simulation = self.data.simulation
-        self.controller = PID(self.data)
+        self.robot = Robot(scene)
+        self.model = self.robot.model
+        self.simulation = self.robot.simulation
        
 
     # def calculate_states(self):
@@ -31,6 +29,6 @@ class Path:
     
     # This func moves the arm to the desired configuration artificially in a single step.
     def go_home(self):
-        for i in self.home:
-            self.simulation.data.qpos[self.model.joint_dict[i]['position_address']] = self.home[i]
+        for i in self.robot.home:
+            self.simulation.data.qpos[self.model.joint_dict[i]['position_address']] = self.robot.home[i]
         self.simulation.forward()
