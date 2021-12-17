@@ -61,6 +61,56 @@ def euler_from_quaternion(quaternion):
 
     return euler_from_matrix(quaternion_matrix(quaternion))
 
+def euler_to_rotMat(x, y, z):
+    Rz_yaw = np.array([
+        [np.cos(z), -np.sin(z), 0],
+        [np.sin(z),  np.cos(z), 0],
+        [          0,            0, 1]])
+    Ry_pitch = np.array([
+        [ np.cos(y), 0, np.sin(y)],
+        [             0, 1,             0],
+        [-np.sin(y), 0, np.cos(y)]])
+    Rx_roll = np.array([
+        [1,            0,             0],
+        [0, np.cos(x), -np.sin(x)],
+        [0, np.sin(x),  np.cos(x)]])
+    # R = RzRyRx
+    rotMat = np.dot(Rz_yaw, np.dot(Ry_pitch, Rx_roll))
+    return rotMat
+
+def euler_p_to_trans(euler, p):
+    R = euler_to_rotMat(euler[0], euler[1], euler[2])
+    return RpToTrans(R, p)
+
+# Checks if a matrix is a valid rotation matrix.
+def isRotationMatrix(R) :
+    Rt = np.transpose(R)
+    shouldBeIdentity = np.dot(Rt, R)
+    I = np.identity(3)
+    n = np.linalg.norm(I - shouldBeIdentity)
+    return n < 1e-6
+
+# Calculates rotation matrix to euler angles
+# The result is the same as MATLAB except the order
+# of the euler angles ( x and z are swapped ).
+def rotationMatrixToEulerAngles(R) :
+
+    assert(isRotationMatrix(R))
+
+    sy = math.sqrt(R[0,0] * R[0,0] +  R[1,0] * R[1,0])
+
+    singular = sy < 1e-6
+
+    if  not singular :
+        x = math.atan2(R[2,1] , R[2,2])
+        y = math.atan2(-R[2,0], sy)
+        z = math.atan2(R[1,0], R[0,0])
+    else :
+        x = math.atan2(-R[1,2], R[1,1])
+        y = math.atan2(-R[2,0], sy)
+        z = 0
+
+    return np.array([x, y, z])
 def IKinSpace(Slist, M, T, thetalist0, eomg, ev):
     """Computes inverse kinematics in the space frame for an open chain robot
     :param Slist: The joint screw axes in the space frame when the
@@ -106,7 +156,7 @@ def IKinSpace(Slist, M, T, thetalist0, eomg, ev):
     """
     thetalist = np.array(thetalist0).copy()
     i = 0
-    maxiterations = 500
+    maxiterations = 100
     Tsb = FKinSpace(M,Slist, thetalist)
     Vs = np.dot(Adjoint(Tsb), \
                 se3ToVec(MatrixLog6(np.dot(TransInv(Tsb), T))))
@@ -155,6 +205,24 @@ def JacobianSpace(Slist, thetalist):
         Js[:, i] = np.dot(Adjoint(T), np.array(Slist)[:, i])
     return Js
 
+def RpToTrans(R, p):
+    """Converts a rotation matrix and a position vector into homogeneous
+    transformation matrix
+    :param R: A 3x3 rotation matrix
+    :param p: A 3-vector
+    :return: A homogeneous transformation matrix corresponding to the inputs
+    Example Input:
+        R = np.array([[1, 0,  0],
+                      [0, 0, -1],
+                      [0, 1,  0]])
+        p = np.array([1, 2, 5])
+    Output:
+        np.array([[1, 0,  0, 1],
+                  [0, 0, -1, 2],
+                  [0, 1,  0, 5],
+                  [0, 0,  0, 1]])
+    """
+    return np.r_[np.c_[R, p], [[0, 0, 0, 1]]]
 def TransToRp(T):
     """Converts a homogeneous transformation matrix into a rotation matrix
     and position vector

@@ -16,6 +16,7 @@ import numpy as np
 import math
 import time
 from .markers import Arrow
+from .utilities import *
 class Mujocoation:
     def __init__(self, path_to_xml):
         self.xml = path_to_xml
@@ -34,10 +35,13 @@ class Mujocoation:
     # Show the simulation current status. No step incermenting! 
     def advance_once(self):
         while True:
-            
             self.add_arrows()
             self.viewer.render()
-
+    
+    def show_step(self):
+        self.simulation.step()
+        self.add_arrows()
+        self.viewer.render()
 
     def play(self, steps = 10e10):
         counter = 0
@@ -67,3 +71,11 @@ class Mujocoation:
         self.add_arrow(x_arrow)
         self.add_arrow(y_arrow)
         self.add_arrow(z_arrow)
+
+    def get_target_pos_euler(self):
+        """ Returns the position and orientation of the target """
+        
+        xyz_target = self.simulation.data.get_body_xpos("target")
+        quat_target  = self.simulation.data.get_body_xquat("target")
+        euler_angles = euler_from_quaternion(quat_target)
+        return np.copy(xyz_target), np.copy(euler_angles)
