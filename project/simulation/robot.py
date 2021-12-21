@@ -26,26 +26,58 @@ class Robot:
         self.simulation = simulation
         self.home = np.array(home_configuration)
         self.nap = np.array(nap_configuration)
+        self.n_joints = 6
         self.take_a_nap()
         # self.go_home()
-        self.n_joints = 6
         self.thetas = self.simulation.data.qpos 
         self.thetas_dot = self.simulation.data.qvel
         self.ee_config = self.get_ee_config()
         self.torques = self.simulation.data.ctrl
-        s0 = [0, 0, 1, 0, 0, 0]
-        s1 = [0, -1, 0, 0.112, 0, 0]
-        s2 = [0, -1, 0, 0.4137, 0, 0.0603]
-        s3 = [0, 0, -1, 0, -0.0603, 0]
-        s4 = [-1, 0, 0, 0, -0.71686502, 0]
-        s5 = [0, -1, 0, 0.71686502, 0, 0.0603]
-        self.Slist =np.c_[s0, s1, s2, s3, s4, s5] 
+        self.accel = self.simulation.data.qacc
+        # links length  in meters
+        self.base_link = 0.067
+        self.l1 = 0.045
+        self.offset = 0.06
+        self.l2 = 0.301
+        self.l3 = 0.2
+        self.l4 = 0.104 #in the -y direction when in the zero configuration
+        self.ee_link = 0.075  #in the -y direction when in the zero configuration
+        # M matrix
+        m_x = np.array([0, -1, 0])
+        m_y = np.array([0, 0, 1])
+        m_z = np.array([-1, 0, 0])
+        m_p = np.array([-self.offset, -0.15, self.base_link+self.l1+self.l2+self.l3+self.l4])
+        self.M = np.r_[np.c_[m_x,m_y, m_z, m_p], [[0, 0, 0, 1]]]
+        
+        # angular velocities in the space form, when in the zero configuration
+        self.s_w0 = [0, 0, 1]
+        self.s_w1 = [0, -1, 0]
+        self.s_w2 = [0, -1, 0]
+        self.s_w3 = [0, 0, -1]
+        self.s_w4 = [-1, 0, 0]
+        self.s_w5 = [0, -1, 0]
 
-        self.M = np.array([  [0,  0, -1, -0.06030074],
-                             [-1, 0,  0, -0.15024978],
-                             [0,  1,  0,  0.7172],
-                             [0,  0,  0,  1]])
-        self.R = self.M[0:3, 0:3]
+        # joint position in the space form, in the zero configuration
+
+        self.s_v0 = [0, 0, 0]
+        self.s_v1 = [self.base_link+self.l1, 0, 0]
+        self.s_v2 = [self.base_link+self.l1+self.l2, 0, self.offset]
+        self.s_v3 = [0, -self.offset, 0]
+        self.s_v4 = [0, -self.base_link-self.l1-self.l2-self.l3-self.l4, 0]
+        self.s_v5 = [self.base_link+self.l1+self.l2+self.l3+self.l4, 0, self.offset]
+
+        #poe in the space form
+        self.s_poe = self.get_space_poe()
+        
+    def get_space_poe(self):
+        s0 = np.array(self.s_w0+self.s_v0)
+        s1 = np.array(self.s_w1+self.s_v1)
+        s2 = np.array(self.s_w2+self.s_v2)
+        s3 = np.array(self.s_w3+self.s_v3)
+        s4 = np.array(self.s_w4+self.s_v4)
+        s5 = np.array(self.s_w5+self.s_v5)
+        return np.c_[s0, s1, s2, s3, s4, s5]
+
     def take_a_nap(self):
         self.simulation.data.qpos[:] = self.nap
         self.simulation.forward()
@@ -69,23 +101,7 @@ class Robot:
         
         return np.copy(self.simulation.data.get_body_xpos('EE'))
     
-    def get_angles(self):
-        """ Returns joint angles [rad] """
-        
-        q = {}
-        for joint in self.model.joint_dict:
-            q[joint] = np.copy(self.simulation.data.qpos[
-                               self.model.joint_dict[joint]['position_address']])
-        return q
-    
-    def get_velocity(self):
-        """ Returns joint velocity [rad/sec] """
-        
-        v = {}
-        for joint in self.model.joint_dict:
-            v[joint] = np.copy(self.simulation.data.qvel[
-                               self.model.joint_dict[joint]['velocity_address']])
-        return v
+   
     
     def get_target(self):
         """ Returns the position and orientation of the target """
@@ -103,49 +119,8 @@ class Robot:
         euler_angles = euler_from_quaternion(quat)
         return np.hstack([np.copy(xyz), np.copy(euler_angles)])
     
-    def get_jacobian(self):
-        """ Returns the Jacobian of the arm (from the perspective of the EE) """
+    
 
-        _J3NP = np.zeros(3 * self.n_joints)
-        _J3NR = np.zeros(3 * self.n_joints)
-        _J6N  = np.zeros((6, self.model.n_joints))
-
-        joint_dyn_addrs = np.array((list(self.model.joint_dict.keys())))
-
-        # Position and rotation Jacobians are 3 x N_JOINTS
-        jac_indices = np.hstack(
-            [joint_dyn_addrs + (ii * self.n_joints) for ii in range(3)])
-
-        mjc.cymj._mj_jacBodyCom(
-            self.model.mjc_model, self.simulation.data,
-            _J3NP, _J3NR, self.model.mjc_model.body_name2id('EE')
-        )
-
-        # get the position / rotation Jacobian hstacked (1 x N_JOINTS*3)
-        _J6N[:3] = _J3NP[jac_indices].reshape((3, self.model.n_joints))
-        _J6N[3:] = _J3NR[jac_indices].reshape((3, self.model.n_joints))
-
-        return np.copy(_J6N)
-
-    def get_inertia_matrix(self):
-        """ Returns the inertia matrix of the arm """                                           
-                                   
-        _MNN = np.zeros(self.n_joints ** 2)
-        
-        joint_dyn_addrs = np.array((list(self.model.joint_dict.keys())))                           
-        self.M_indices = [
-            ii * self.n_joints + jj
-            for jj in joint_dyn_addrs
-            for ii in joint_dyn_addrs
-        ]
-                                   
-        # stored in mjData.qM, stored in custom sparse format,
-        # convert qM to a dense matrix with mj_fullM
-        mjc.cymj._mj_fullM(self.model.mjc_model, _MNN, self.simulation.data.qM)
-        
-        M = _MNN[self.M_indices]
-        M = M.reshape((self.model.n_joints, self.model.n_joints))
-        return np.copy(M)
     
     def get_gravity_bias(self):       
         """ Returns the effects of Coriolis, centrifugal, and gravitational forces """
@@ -154,12 +129,7 @@ class Robot:
         g = -1 * self.simulation.data.qfrc_bias[joint_dyn_addrs]
         return g
 
-    def get_inverse_jacobian(self):
-        jac = self.get_jacobian()
-        return np.linalg.pinv(jac)
-       
-
-
+   
     def get_links_positions(self):
         pos_dict = {}
         names = ['base_link', 'link1', 'link2', 'link3', 'link4', 'link5', 'link6', 'EE']
@@ -167,3 +137,7 @@ class Robot:
             pos = self.simulation.data.get_body_xpos(name)
             pos_dict[name]=pos
         return pos_dict
+
+    def get_joints_pos(self):
+        self.thetas = self.simulation.data.qpos
+        return self.thetas

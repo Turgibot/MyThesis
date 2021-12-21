@@ -14,6 +14,8 @@ from .utilities import *
 from .kinematics import Kinematics
 import sympy as sp
 from sympy.matrices import Matrix, eye, zeros, ones, diag, GramSchmidt
+
+from project.simulation import kinematics
 class Control:
     def __init__(self, robot, simulation, theta_d=[0, 0, 0, 0, 0, 0]) -> None:
         self.robot = robot
@@ -37,18 +39,19 @@ class Control:
     def FK(self, thetalist=None):
         if not thetalist:
             thetalist = self.theta_d
-        fk = FKinSpace(self.robot.M, self.robot.Slist, thetalist)
+        fk = self.kinematics.FK(self.robot.M, self.robot.s_poe, thetalist)
         return fk
 
     def IK(self, T):
-        eomg = 0.01
-        ev = 0.001
-        theta_d, success = IKinSpace(Slist=self.robot.Slist, M=self.robot.M, T=T, thetalist0 = np.array([0, 0, 0, 0, 0, 0]), eomg=eomg, ev = ev)
+        eomg = 0.000000000000001
+        ev = 0.00000000000001
+        theta_d, success = IKinSpace(Slist=self.robot.s_poe, M=self.robot.M, T=T, thetalist0 = np.array([np.pi/3, np.pi,  0, 0, 0, 0]), eomg=eomg, ev = ev)
         if not success:
             print("IK failed")
             exit(1)
         theta_d = np.array(theta_d)
         self.theta_d = theta_d
+        return theta_d
         # self.theta_d [theta_d > np.pi] = theta_d -np.pi  
     #calculate the necessary velocity to drive each joint to a desired theta_d 
     def PID(self):
@@ -67,6 +70,9 @@ class Control:
         g = -1 * self.simulation.data.qfrc_bias[:]
         return g
 
-
+    def _IK(self, T_target):
+        eomg = 0.000000000000001
+        ev = 0.00000000000001
+        return self.kinematics.iterativeIK(T_target, eomg, ev)
         
 

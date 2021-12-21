@@ -10,13 +10,14 @@ def main():
     scene = Mujocoation(xml_path)
     robot = Robot(scene.model, scene.simulation)
     control = Control(robot, scene.simulation, theta_d=robot.home)
-
+    T_target = control.FK()
+    T_target[:3, 3] = [0.2, 0.3, 0.45]
+    control.theta_d = control._IK(T_target)
     while True:
         control.PID()
         scene.show_step()
         print(robot.get_ee_position())
     
-    # print(control.FK())
     
 
 if __name__== "__main__":

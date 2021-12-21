@@ -156,10 +156,9 @@ def IKinSpace(Slist, M, T, thetalist0, eomg, ev):
     """
     thetalist = np.array(thetalist0).copy()
     i = 0
-    maxiterations = 100
+    maxiterations = 20
     Tsb = FKinSpace(M,Slist, thetalist)
-    Vs = np.dot(Adjoint(Tsb), \
-                se3ToVec(MatrixLog6(np.dot(TransInv(Tsb), T))))
+    Vs = np.dot(Adjoint(Tsb),se3ToVec(MatrixLog6(np.dot(TransInv(Tsb), T))))
     err = np.linalg.norm([Vs[0], Vs[1], Vs[2]]) > eomg \
           or np.linalg.norm([Vs[3], Vs[4], Vs[5]]) > ev
     while err and i < maxiterations:
@@ -172,6 +171,7 @@ def IKinSpace(Slist, M, T, thetalist0, eomg, ev):
                     se3ToVec(MatrixLog6(np.dot(TransInv(Tsb), T))))
         err = np.linalg.norm([Vs[0], Vs[1], Vs[2]]) > eomg \
               or np.linalg.norm([Vs[3], Vs[4], Vs[5]]) > ev
+    
     return (thetalist, not err)
 
 

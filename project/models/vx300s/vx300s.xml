@@ -38,7 +38,7 @@
     <worldbody>
         <camera fovy="45" pos="1 1 5" />
         <light diffuse=".5 .5 .5" pos="0 0 3" dir="0 0 -1"/>
-        <body name="target" pos="-2.1 0 0.5" mocap="true">
+        <body name="target" pos="0.2 0.3 0.45" mocap="true">
             <site name="target" type="sphere" size="0.04" rgba="1 0 0 .5"/>
         </body>
         

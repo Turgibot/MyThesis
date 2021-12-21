@@ -81,3 +81,7 @@ class Mujocoation:
         quat_target  = self.simulation.data.get_body_xquat("target")
         euler_angles = euler_from_quaternion(quat_target)
         return np.copy(xyz_target), np.copy(euler_angles)
+    
+    def get_T_target(self):
+        p, _ = self.get_target_pos_euler()
+        
