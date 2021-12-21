@@ -10,7 +10,7 @@ class Arrow:
 
     def set_z(self, pos=[-0.5, 0.5, 0]):
         self.rot_mat = [[1, 0, 0],[0, 1, 0],[0, 0, 1]]
-        self.label = ""
+        self.label = "z"
         if self.size is None:
             self.size = [0.01, 0.01, 0.35]
         self.rgba = [0, 0, 1, 1]
@@ -18,7 +18,7 @@ class Arrow:
 
     def set_y(self, pos=[-0.5, 0.5, 0]):
         self.rot_mat = [[1, 0, 0],[0, 0, 1],[0, -1, 0]]
-        self.label = ""
+        self.label = "y"
         if self.size is None:
             self.size = [0.01, 0.01, 0.35]
         self.rgba = [0, 1, 0, 1]
@@ -26,7 +26,7 @@ class Arrow:
     
     def set_x(self, pos=[-0.5, 0.5, 0]):
         self.rot_mat = [[0, 0, 1],[0, 1, 0],[-1, 0, 0]]
-        self.label = ""
+        self.label = "x"
         if self.size is None:
             self.size = [0.01, 0.01, 0.35]
         self.rgba = [1, 0, 0, 1]

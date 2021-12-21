@@ -29,7 +29,10 @@ class Mujocoation:
         self.viewer = mjc.MjViewer(self.simulation)
         self.cam = self.viewer.cam
         self.cam.distance = 2
-        self.cam.azimuth = 0
+        self.cam.azimuth = -90
+        self.cam.elevation = -2
+        self.cam.lookat[:] = [0, 0, 0.2]
+
 
     # This method is for testing purpose only
     # Show the simulation current status. No step incermenting! 
@@ -56,10 +59,9 @@ class Mujocoation:
         self.viewer.add_marker( mat=marker.rot_mat,
                                 pos=marker.pos,
                                 type=100,
-                                label=marker.label,
+                                label="",
                                 size=marker.size,
                                 rgba=marker.rgba)
-
 
     def add_arrows(self):
         z_arrow = Arrow()

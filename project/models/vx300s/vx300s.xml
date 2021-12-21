@@ -19,7 +19,7 @@
         <material name="tile" texture="floor_tile" specular="0" shininess="0" reflectance="0" emission="1" />
         <material name="black" specular="1" shininess="1" reflectance="1" rgba="0.08 0.08 0.08 1" emission="1" />
         <material name="gray" specular="1" shininess="1" reflectance="1" rgba="0.1 0.1 0.1 1" emission="1" />
-        <material name="dark_gray" specular="1" shininess="1" reflectance="1" rgba="0.13 0.2 0.25 1" emission="1" />
+        <material name="dark_gray" specular="0.5" shininess="0.5" reflectance="1" rgba="0.08 0.08 0.1 1" emission="1" />
         <material name="white" specular="1" shininess="1" reflectance="1" rgba="1 1 1 1" emission="1" />
 
         <texture name="foam_blocks" file="meshes/foam_blocks.png" width="1994" height="1884" type="2d"/>
@@ -36,18 +36,16 @@
     </contact>
 
     <worldbody>
-        
-        <camera fovy="45" pos="1 1 50" />
-        <body name="target" pos="-0.2 -0.2 0.4" mocap="true">
-            <geom name="target" type="sphere" size="0.04" rgba="1 0 0 .5"/>
+        <camera fovy="45" pos="1 1 5" />
+        <light diffuse=".5 .5 .5" pos="0 0 3" dir="0 0 -1"/>
+        <body name="target" pos="-2.1 0 0.5" mocap="true">
+            <site name="target" type="sphere" size="0.04" rgba="1 0 0 .5"/>
         </body>
         
         <body name="hand" pos="0 0 0" mocap="true"/>
         <geom name="floor_foam_block" euler="0 0 1.5708" pos="0 0 0" size="0.5 0.5 0.05" type="plane" rgba="1 0.83 0.61 1" material="foam"/>
         
         <geom name="floor_grey_tile" pos="0 0 -0.001"  size="0.7 0.7 0.05" type="plane" material="tile"/>
-
-        <light pos="0 1 1" dir="0 -1 -1" diffuse="1 1 1"/>
 
         <body name="base_link" pos="0 0 0">
             <geom name="link0" type="mesh" mesh="Base" pos="0 0 0" material="dark_gray"/>
@@ -89,7 +87,7 @@
                                 
                                     <body
                                         name="EE" pos="0 -0.0075 0.2" euler="1.5708 1.5708 1.5708">
-                                        <geom name="EE" type="sphere" size="0.04" rgba="0 1 0 .75"/>
+                                        <site name="EE" type="sphere" size="0.04" rgba="0 1 0 .75"/>
                                     </body>
                                 </body>
                             </body>

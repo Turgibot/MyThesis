@@ -19,12 +19,15 @@ class Robot:
     def __init__(self,
                 model,      # The mujoco xml generated model
                 simulation, # The mujoco simulation object
-                home_configuration = [-np.pi/2, 0, np.pi/2, 0, np.pi/2, 0]
+                home_configuration = [-np.pi/2, 0, np.pi/2, 0, np.pi/2, 0],
+                nap_configuration = [-0.5*np.pi, -0.61*np.pi, 1.025*np.pi, 0.5*np.pi, 0.38*np.pi, 0]
                 ):
         self.model = model
         self.simulation = simulation
         self.home = np.array(home_configuration)
-        self.zero_config()
+        self.nap = np.array(nap_configuration)
+        self.take_a_nap()
+        # self.go_home()
         self.n_joints = 6
         self.thetas = self.simulation.data.qpos 
         self.thetas_dot = self.simulation.data.qvel
@@ -43,13 +46,16 @@ class Robot:
                              [0,  1,  0,  0.7172],
                              [0,  0,  0,  1]])
         self.R = self.M[0:3, 0:3]
-        
+    def take_a_nap(self):
+        self.simulation.data.qpos[:] = self.nap
+        self.simulation.forward()
+
     def go_home(self):
         self.simulation.data.qpos[:] = self.home
         self.simulation.forward()
+
     def zero_config(self):
-        thetas = np.array([0, 0, 0, 0, 0, 0])
-        self.simulation.data.qpos[:] = thetas
+        self.simulation.data.qpos[:] = np.zeros(6)
         self.simulation.forward()
 
     def read(self):

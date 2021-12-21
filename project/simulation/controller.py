@@ -22,17 +22,19 @@ class Control:
         self.thetalist= np.array(self.theta_d)
         self.d = np.zeros(self.robot.n_joints)
         self.i = np.zeros(self.robot.n_joints)
-        self.prev_err = np.subtract(self.theta_d, self.simulation.data.qpos[:]%np.pi)
-        self.kp = 0.15
+        self.prev_err = np.subtract(self.theta_d, self.simulation.data.qpos[:])
+        self.kp = 0.25
         self.ki = 0.00000001
-        self.kd = 0.001
+        self.kd = 0.1
         
         
 # -----------------------------------------------------------------------------
 # FORWARD KINEMATICS
 # -----------------------------------------------------------------------------
     
-    def FK(self, thetalist):
+    def FK(self, thetalist=None):
+        if not thetalist:
+            thetalist = self.theta_d
         fk = FKinSpace(self.robot.M, self.robot.Slist, thetalist)
         return fk
 
@@ -46,7 +48,7 @@ class Control:
         theta_d = np.array(theta_d%(2*np.pi))
         self.theta_d = theta_d
         # self.theta_d [theta_d > np.pi] = theta_d -np.pi  
-    #calculate the necessary torque to drive each joint to a desired theta_d 
+    #calculate the necessary velocity to drive each joint to a desired theta_d 
     def PID(self):
                
         err = np.subtract(self.theta_d, self.simulation.data.qpos[:])
