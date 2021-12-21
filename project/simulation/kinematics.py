@@ -12,8 +12,8 @@ import numpy as np
 import sympy as sp
 from sympy.matrices import Matrix, eye, zeros, ones, diag, GramSchmidt
 from sympy.matrices.dense import rot_axis1, rot_axis2, rot_axis3
-class IK:
-    def __init__(self):
+class Kinematics:
+    def __init__(self, robot):
          # Robots' joints
         self.n_joints = 6
         self.theta0 = sp.Symbol('theta0') 
@@ -24,15 +24,18 @@ class IK:
         self.theta5 = sp.Symbol('theta5')
         
         # length of the robots' links in meters
-        self.l0 = 0.13 #this is the {s} frame z = 0 
-        self.l1 = 0.30
+        self.base_link = 0.067
+        self.l1 = 0.045
         self.offset = 0.06
-        self.l2 = 0.06
-        self.l3 = 0.195
-        self.l4 = 0.106 #in the -y direction when in the zero configuration
+        self.l2 = 0.301
+        self.l3 = 0.2
+        self.l4 = 0.104 #in the -y direction when in the zero configuration
         self.ee_link = 0.075  #in the -y direction when in the zero configuration
-        
-
+        m_x = np.array([0, -1, 0])
+        m_y = np.array([0, 0, 1])
+        m_z = np.array([-1, 0, 0])
+        m_p = np.array([-self.offset, -0.15, self.base_link+self.l1+self.l2+self.l3+self.l4])
+        self.M = np.r_[np.c_[m_x,m_y, m_z, m_p], [[0, 0, 0, 1]]]
         # angular velocities in the space form, when in the zero configuration
         self.s_w0 = [0, 0, 1]
         self.s_w1 = [0, -1, 0]
@@ -44,25 +47,23 @@ class IK:
         # joint position in the space form, in the zero configuration
 
         self.s_v0 = [0, 0, 0]
-        self.s_v1 = [self.l1, 0, 0]
-        self.s_v2 = [self.l1, 0, self.offset]
+        self.s_v1 = [self.base_link+self.l1, 0, 0]
+        self.s_v2 = [self.base_link+self.l1+self.l2, 0, self.offset]
         self.s_v3 = [0, -self.offset, 0]
-        self.s_v4 = [0, -self.l1-self.l2-self.l3, 0]
-        self.s_v5 = [self.l1+self.l2+self.l3, 0, self.offset]
+        self.s_v4 = [0, -self.base_link-self.l1-self.l2-self.l3-self.l4, 0]
+        self.s_v5 = [self.base_link+self.l1+self.l2+self.l3+self.l4, 0, self.offset]
 
         #poe in the space form
         self.poe = self.get_space_poe()
-        print(self.poe)
-        print(self.poe.shape)
-
+        
     def get_space_poe(self):
-        s0 = np.array(self.s_w0+self.s_v0).T
-        s1 = np.array(self.s_w1+self.s_v1).T
-        s2 = np.array(self.s_w2+self.s_v2).T
-        s3 = np.array(self.s_w3+self.s_v3).T
-        s4 = np.array(self.s_w4+self.s_v4).T
-        s5 = np.array(self.s_w5+self.s_v5).T
-        return np.hstack((s0, s1, s2, s3, s4, s5)).reshape((6,6)).T
+        s0 = np.array(self.s_w0+self.s_v0)
+        s1 = np.array(self.s_w1+self.s_v1)
+        s2 = np.array(self.s_w2+self.s_v2)
+        s3 = np.array(self.s_w3+self.s_v3)
+        s4 = np.array(self.s_w4+self.s_v4)
+        s5 = np.array(self.s_w5+self.s_v5)
+        return np.c_[s0, s1, s2, s3, s4, s5]
 
     def w_to_skew(self, w):
         return np.array([[  0  ,-w[2],  w[1]],
@@ -91,10 +92,29 @@ class IK:
         skew_v = np.c_[skew, v]
         return np.r_[skew_v, np.zeros((1, 4))]
     
-    # convert a matrix expo [V] ([S] or [B]) to its 1x6 vector representation
+    # convert a matrix expo [V] ([S] or [B]) to its 6x1 vector representation
     def matrix_expo_to_v(self, v_mat):
-        return np.array([v_mat[2][1], v_mat[0][2], v_mat[1][0]], [v_mat[0][3], v_mat[1][3], v_mat[2][3]])
-
+        return np.c_[v_mat[2][1], v_mat[0][2], v_mat[1][0]], [v_mat[0][3], v_mat[1][3], v_mat[2][3]]
+    
+    # converts a 4x4 se3 mat_exp [V] to a SE3 homogenious transformation matrix (htm)
+    def mat_exp_to_htm(self, exp_mat):
+        skew = exp_mat[0: 3, 0: 3]
+        w = self.skew_to_w(skew)
+        v = exp_mat[0: 3, 3]
+        theta = np.linalg.norm(w)
+        if abs(theta)< 1e-6:
+            return np.r_[np.c_[np.eye(3), v], [[0, 0, 0, 1]]]
+        
+        skew_normed = skew / theta
+        rotation_mat = self.w_to_rotation_mat(w)
+        g = np.eye(3) * theta + (1 - np.cos(theta)) * skew_normed + (theta - np.sin(theta)) * np.dot(skew_normed,skew_normed)
+        cols = np.c_[rotation_mat, np.dot(g,v)/theta]
+        return np.r_[cols,
+                     [[0, 0, 0, 1]]]
+    def v_to_htm(self, v):
+        exp_mat = self.v_to_matrix_expo_form(v)
+        return self.mat_exp_to_htm(exp_mat)
+    
     def cross(self, w, q):
         a = w[1]*q[2] - w[2]*q[1]
         b = w[0]*q[2] - w[2]*q[0]
@@ -162,5 +182,12 @@ class IK:
         b4 = sp.Matrix.vstack(wb4.T,vb4)
 
         self.body_jaco = sp.Matrix.hstack(b4, b5)
+    
+    def FK(self, thetas):
+        T = np.array(self.M)
+        for i in range(len(thetas) - 1, -1, -1):
+            mat_exp = self.v_to_matrix_expo_form(np.array(self.poe)[:, i] * thetas[i])
+            T = np.dot(self.mat_exp_to_htm(mat_exp), T)
+        return T
 
-ik = IK()
+

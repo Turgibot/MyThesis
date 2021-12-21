@@ -11,6 +11,7 @@ Real robot has a builtin PID controller so the input is simply the joint values
 
 import numpy as np
 from .utilities import *
+from .kinematics import Kinematics
 import sympy as sp
 from sympy.matrices import Matrix, eye, zeros, ones, diag, GramSchmidt
 class Control:
@@ -18,6 +19,7 @@ class Control:
         self.robot = robot
         self.model = robot.model
         self.simulation = simulation
+        self.kinematics = Kinematics(robot)
         self.theta_d = np.array(theta_d)
         self.thetalist= np.array(self.theta_d)
         self.d = np.zeros(self.robot.n_joints)
@@ -45,7 +47,7 @@ class Control:
         if not success:
             print("IK failed")
             exit(1)
-        theta_d = np.array(theta_d%(2*np.pi))
+        theta_d = np.array(theta_d)
         self.theta_d = theta_d
         # self.theta_d [theta_d > np.pi] = theta_d -np.pi  
     #calculate the necessary velocity to drive each joint to a desired theta_d 

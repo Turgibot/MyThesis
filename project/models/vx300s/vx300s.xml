@@ -86,7 +86,7 @@
                                     <geom name="link6" type="mesh" mesh="Gripper" pos="0 0 0" euler="-1.5708 0 0" material="dark_gray"/>
                                 
                                     <body
-                                        name="EE" pos="0 -0.0075 0.2" euler="1.5708 1.5708 1.5708">
+                                        name="EE" pos="0 -0.0075 0.1" euler="1.5708 1.5708 1.5708">
                                         <site name="EE" type="sphere" size="0.04" rgba="0 1 0 .75"/>
                                     </body>
                                 </body>

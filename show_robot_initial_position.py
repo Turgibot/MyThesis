@@ -9,11 +9,14 @@ def main():
     xml_path = "./project/models/vx300s/vx300s.xml"
     scene = Mujocoation(xml_path)
     robot = Robot(scene.model, scene.simulation)
-    control = Control(robot, scene.simulation, theta_d=np.array([0, 0, 0, 0, 0, 0]))
+    control = Control(robot, scene.simulation, theta_d=robot.home)
 
     while True:
         control.PID()
         scene.show_step()
+        print(robot.get_ee_position())
+    
+    # print(control.FK())
     
 
 if __name__== "__main__":
