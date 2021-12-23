@@ -9,6 +9,7 @@ Real robot has a builtin PID controller so the input is simply the joint values
 """
 
 
+import re
 import numpy as np
 from .utilities import *
 from .kinematics import Kinematics
@@ -73,6 +74,13 @@ class Control:
     def _IK(self, T_target):
         eomg = 0.000000000000001
         ev = 0.00000000000001
-        return self.kinematics.iterativeIK(T_target, eomg, ev)
+        thetas = self.kinematics.trajectoryIK(T_target, eomg, ev)
+        for i in range(len(thetas)):
+            if thetas[i]>np.pi:
+                thetas[i]-=2*np.pi
+            elif thetas[i]<-np.pi:
+                thetas[i]+=2*np.pi
+        return thetas
+
         
 

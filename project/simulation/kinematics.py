@@ -22,13 +22,24 @@ class Kinematics:
     def __init__(self, robot):
         self.robot = robot
          # Robots' joints
-        self.theta0 = sp.Symbol('theta0') 
-        self.theta1 = sp.Symbol('theta1') 
-        self.theta2 = sp.Symbol('theta2') 
-        self.theta3 = sp.Symbol('theta3')
-        self.theta4 = sp.Symbol('theta4')
-        self.theta5 = sp.Symbol('theta5')
-       
+        self.s_w0 = [0, 0, 1]
+        self.s_w1 = [0, -1, 0]
+        self.s_w2 = [0, -1, 0]
+        self.s_w3 = [0, 0, -1]
+        self.s_w4 = [-1, 0, 0]
+        self.s_w5 = [0, -1, 0]
+         # links length  in meters
+        self.base_link = 0.067
+        self.l1 = 0.045
+        self.offset = 0.06
+        self.l2 = 0.301
+        self.l3 = 0.2
+        self.l4 = 0.104 #in the -y direction when in the zero configuration
+        self.ee_link = 0.075  #in the -y direction when in the zero configuration
+    
+    def treat_as_zero(self, x):
+        return abs(x)< 1e-6
+
     def w_to_skew(self, w):
         return np.array([[  0  ,-w[2],  w[1]],
                          [ w[2],  0  , -w[0]],
@@ -37,18 +48,19 @@ class Kinematics:
         return np.array([skew[2][1], skew[0][2], skew[1][0]])
 
     # using the rodriguez formula
-    def skew_to_rotation_mat(self, skew):
+    def skew_to_rot_mat(self, skew):
         w = self.skew_to_w(skew)
         theta = np.linalg.norm(w)
-        if abs(theta)< 1e-6:
+        if self.treat_as_zero(theta):
             return np.eye(3)
         skew_normed = skew/theta
         return np.eye(3)+np.sin(theta)*skew_normed + (1 - np.cos(theta)) * np.dot(skew_normed, skew_normed)
 
-    def w_to_rotation_mat(self, w):
+    def w_to_rot_mat(self, w):
         skew = self.w_to_skew(w)
-        return self.skew_to_rotation_mat(skew)
+        return self.skew_to_rot_mat(skew)
     
+
     # represents a 1*6 velocity vector v in  a 4x4 matrix for e^[v]
     def v_to_matrix_expo_form(self, V):
         skew = self.w_to_skew([V[0], V[1], V[2]])
@@ -57,7 +69,7 @@ class Kinematics:
         return np.r_[skew_v, np.zeros((1, 4))]
     
     # convert a matrix expo [V] ([S] or [B]) to its 6x1 vector representation
-    def matrix_expo_to_v(self, v_mat):
+    def mat_exp_to_v(self, v_mat):
         return np.c_[v_mat[2][1], v_mat[0][2], v_mat[1][0]], [v_mat[0][3], v_mat[1][3], v_mat[2][3]]
     
     # converts a 4x4 se3 mat_exp [V] to a SE3 homogenious transformation matrix (htm)
@@ -66,11 +78,11 @@ class Kinematics:
         w = self.skew_to_w(skew)
         v = exp_mat[0: 3, 3]
         theta = np.linalg.norm(w)
-        if abs(theta)< 1e-6:
+        if self.treat_as_zero(theta):
             return np.r_[np.c_[np.eye(3), v], [[0, 0, 0, 1]]]
         
         skew_normed = skew / theta
-        rotation_mat = self.w_to_rotation_mat(w)
+        rotation_mat = self.w_to_rot_mat(w)
         g = np.eye(3) * theta + (1 - np.cos(theta)) * skew_normed + (theta - np.sin(theta)) * np.dot(skew_normed,skew_normed)
         cols = np.c_[rotation_mat, np.dot(g,v)/theta]
         return np.r_[cols,
@@ -83,7 +95,7 @@ class Kinematics:
         a = w[1]*q[2] - w[2]*q[1]
         b = w[0]*q[2] - w[2]*q[0]
         c = w[0]*q[1] - w[1]*q[0]    
-        r = sp.Matrix([a, -b, c])
+        r = np.array([a, -b, c])
         return r
    
         
@@ -99,43 +111,43 @@ class Kinematics:
                                     [0, 0, 0, 1]])
         return trans
     
-    def get_space_jaco(self):
+    def get_space_jaco(self, thetas):
         # joint 0
-        s0 = sp.Matrix(self.s_w0 + self.s_v0)
+        s0 = np.array(self.s_w0 + [0]*3)
         
 
         # joint 1
-        w1 = rot_axis3(self.theta0)*sp.Matrix(self.s_w1)
-        q1 = sp.Matrix([0, 0, self.l1])
+        w1 = rot_axis3(thetas[0]) @ np.array(self.s_w1)
+        q1 = np.array([0, 0, self.l1])
         v1 = -1*self.cross(w1, q1)
-        s1 = sp.Matrix.vstack(w1,v1)
+        s1 = np.r_[w1,v1]
 
         # Joint 2 has an ofset in the -x direction 
-        w2 = rot_axis3(self.theta0)*rot_axis2(-self.theta1)*sp.Matrix(self.s_w2)
-        q2 = sp.Matrix([-self.offset, 0, 0.413])
+        w2 = rot_axis3(thetas[0]) @ rot_axis2(-thetas[1]) @ np.array(self.s_w2)
+        q2 = np.array([-self.offset, 0, 0.413])
         v2 = -1*self.cross(w2, q2)
-        s2 = sp.Matrix.vstack(w2,v2)
+        s2 = np.r_[w2,v2]
 
         # joint 3
-        w3 = rot_axis3(self.theta0)*rot_axis2(-self.theta1)*rot_axis2(-self.theta2)*sp.Matrix(self.s_w3)
-        q3 = sp.Matrix([-0.0603, 0, 0])
+        w3 = rot_axis3(thetas[0]) @ rot_axis2(-thetas[1]) @ rot_axis2(-thetas[2]) @ np.array(self.s_w3)
+        q3 = np.array([-0.0603, 0, 0])
         v3 = -1*self.cross(w3, q3)
-        s3 = sp.Matrix.vstack(w3,v3)
+        s3 = np.r_[w3,v3]
         
         # joint 4
-        w4 = rot_axis3(self.theta0)*rot_axis2(-self.theta1)*rot_axis2(-self.theta2)*rot_axis1(-self.theta3)*sp.Matrix(self.s_w4)
-        q4 = sp.Matrix([-0.0603, 0, 0])
+        w4 = rot_axis3(thetas[0]) @ rot_axis2(-thetas[1]) @ rot_axis2(-thetas[2]) @ rot_axis1(-thetas[3]) @ np.array(self.s_w4)
+        q4 = np.array([-0.0603, 0, 0])
         v4 = -1*self.cross(w4, q4)
-        s4 = sp.Matrix.vstack(w4,v4)
+        s4 = np.r_[w4,v4]
 
         # joint 5
-        w5 = rot_axis3(self.theta0)*rot_axis2(-self.theta1)*rot_axis2(-self.theta2)*rot_axis1(-self.theta3)*rot_axis2(-self.theta4)*sp.Matrix(self.s_w5)
-        q5 = sp.Matrix([-0.0603, 0, 0])
+        w5 = rot_axis3(thetas[0]) @ rot_axis2(-thetas[1]) @ rot_axis2(-thetas[2]) @ rot_axis1(-thetas[3]) @ rot_axis2(-thetas[4]) @ np.array(self.s_w5)
+        q5 = np.array([-0.0603, 0, 0])
         v5 = -1*self.cross(w5, q5)
-        s5 = sp.Matrix.vstack(w5,v5)
+        s5 = np.r_[w5,v5]
 
-
-        return sp.Matrix.hstack(s0, s1, s2, s3, s4,s5)
+        js = np.c_[s0, s1, s2, s3, s4,s5]
+        return js
 
     def htm_to_rp(self, T):
         T = np.array(T)
@@ -145,14 +157,41 @@ class Kinematics:
         Rt = np.array(R).T
         return np.r_[np.c_[Rt, -np.dot(Rt, p)], [[0, 0, 0, 1]]]
 
-    def get_body_jacobian(self):
-        b5 = sp.Matrix([1, 0, 0, 0, 0, 0])
-        wb4 = sp.Matrix([0, -1, 0]).T*rot_axis1(self.theta5)
-        qb4 = sp.Matrix([-0.1, 0, 0])
-        vb4 = -1*self.cross(wb4, qb4)
-        b4 = sp.Matrix.vstack(wb4.T,vb4)
+    def htm_to_exp_mat(self, T):
+        R, p = self.htm_to_rp(T)
+        skew = self.rot_to_skew(R)
+        if np.array_equal(skew, np.zeros((3, 3))):
+            return np.r_[   np.c_[   np.zeros((3, 3)),[T[0][3], T[1][3], T[2][3]]],
+                            [[0, 0, 0, 0]]]
+        else:
+            theta = np.arccos((np.trace(R) - 1) / 2.0)
+            g_inv = np.eye(3) - skew / 2.0 + (1.0 / theta - 1.0 / np.tan(theta / 2.0) / 2)* np.dot(skew,skew) / theta
+            p = [T[0][3],T[1][3],T[2][3]]
+            v = np.dot(g_inv,p)
+            return np.r_[np.c_[skew,v], [[0, 0, 0, 0]]]
 
-        self.body_jaco = sp.Matrix.hstack(b4, b5)
+     #Note that the omega vector is not normalized by theta as in the books algorithm                   
+    def rot_to_skew(self, R):
+
+        acosinput = (np.trace(R) - 1) / 2.0
+        #pure translation
+        if acosinput >= 1:
+            return np.zeros((3, 3))
+        elif acosinput <= -1:
+            if not self.treat_as_zero(1 + R[2][2]):
+                w = (1.0 / np.sqrt(2 * (1 + R[2][2]))) \
+                    * np.array([R[0][2], R[1][2], 1 + R[2][2]])
+            elif not self.treat_as_zero(1 + R[1][1]):
+                w = (1.0 / np.sqrt(2 * (1 + R[1][1]))) \
+                    * np.array([R[0][1], 1 + R[1][1], R[2][1]])
+            else:
+                w = (1.0 / np.sqrt(2 * (1 + R[0][0]))) \
+                    * np.array([1 + R[0][0], R[1][0], R[2][0]])
+            return self.w_to_skew(np.pi * w)
+        else:
+            theta = np.arccos(acosinput)
+            return theta / 2.0 / np.sin(theta) * (R - np.array(R).T)
+        
     
     def FK(self, M, s_poe, thetas):
         T = np.array(M)
@@ -160,59 +199,30 @@ class Kinematics:
             mat_exp = self.v_to_matrix_expo_form(np.array(s_poe)[:, i] * thetas[i])
             T = np.dot(self.mat_exp_to_htm(mat_exp), T)
         return T
-
-    # def IK(self, s_poe, M, Tsd, theta0, w_err, v_err):
-        # i = 0
-        # end = 100
-        # #get ee configuration from initial guess
-        # Tsb = self.FK(M, s_poe, theta0)
-        # Tbs = self.htm_inv(Tsb)
-        # Tbd = np.dot(Tbs, Tsd)
-    def IKinSpace(self, s_poe, M, T, thetalist0, eomg, ev):
     
-        thetalist = np.array(thetalist0).copy()
-        i = 0
-        maxiterations = 20
-        Tsb = self.FK(M,s_poe, thetalist)
-        Vs = np.dot(Adjoint(Tsb),se3ToVec(MatrixLog6(np.dot(TransInv(Tsb), T))))
-        err = np.linalg.norm([Vs[0], Vs[1], Vs[2]]) > eomg \
-            or np.linalg.norm([Vs[3], Vs[4], Vs[5]]) > ev
-        while err and i < maxiterations:
-            thetalist = thetalist \
-                        + np.dot(np.linalg.pinv(JacobianSpace(s_poe, \
-                                                            thetalist)), Vs)
-            i = i + 1
-            Tsb = FKinSpace(M, s_poe, thetalist)
-            Vs = np.dot(Adjoint(Tsb), \
-                        se3ToVec(MatrixLog6(np.dot(TransInv(Tsb), T))))
-            err = np.linalg.norm([Vs[0], Vs[1], Vs[2]]) > eomg \
-                or np.linalg.norm([Vs[3], Vs[4], Vs[5]]) > ev
-        
-        return (thetalist, not err)
-
-    
-    def Adjoint(self, T):
+    def Adj(self, T):
         R, p = self.htm_to_rp(T)
         return np.r_[np.c_[R, np.zeros((3, 3))],np.c_[np.dot(self.w_to_skew(p), R), R]]
 
-    def trajectory(self, Tstart, Tend, iterations=100):
+    # devides the path to sections
+    def trajectory(self, Tstart, Tend, sections=3):
         Tdif = Tend - Tstart
         traj_list = []
-        for i in range(1, iterations+1):
-            traj_list.append(Tstart+(i/iterations)*Tdif)
+        for i in range(1, sections+1):
+            traj_list.append(Tstart+(i/sections)*Tdif)
         return traj_list
-
-    def iterativeIK(self,T_target, w_err, v_err):
+    
+    def trajectoryIK(self,T_target, w_err, v_err):
         t0 = self.robot.get_joints_pos()
         M = self.robot.M
         s_poe = self.robot.s_poe
 
         Tstart = self.FK(M, s_poe, t0)
         traj_list = self.trajectory(Tstart, T_target)
-        curr_T = Tstart
+
         for i in range(1, len(traj_list)):
             next_T = traj_list[i]
-            t0 = IKinSpace(s_poe, M, next_T, t0, w_err, v_err)[0]
+            t0 = self.IK_space(s_poe, M, next_T, t0, w_err, v_err)[0]
             for i in range(len(t0)):
                 if t0[i]>2*np.pi:
                     t0[i]%=2*np.pi
@@ -222,99 +232,50 @@ class Kinematics:
 
         return t0
 
-def IKinSpace(Slist, M, T, thetalist0, eomg, ev):
-    """Computes inverse kinematics in the space frame for an open chain robot
-    :param Slist: The joint screw axes in the space frame when the
-                  manipulator is at the home position, in the format of a
-                  matrix with axes as the columns
-    :param M: The home configuration of the end-effector
-    :param T: The desired end-effector configuration Tsd
-    :param thetalist0: An initial guess of joint angles that are close to
-                       satisfying Tsd
-    :param eomg: A small positive tolerance on the end-effector orientation
-                 error. The returned joint angles must give an end-effector
-                 orientation error less than eomg
-    :param ev: A small positive tolerance on the end-effector linear position
-               error. The returned joint angles must give an end-effector
-               position error less than ev
-    :return thetalist: Joint angles that achieve T within the specified
-                       tolerances,
-    :return success: A logical value where TRUE means that the function found
-                     a solution and FALSE means that it ran through the set
-                     number of maximum iterations without finding a solution
-                     within the tolerances eomg and ev.
-    Uses an iterative Newton-Raphson root-finding method.
-    The maximum number of iterations before the algorithm is terminated has
-    been hardcoded in as a variable called maxiterations. It is set to 20 at
-    the start of the function, but can be changed if needed.
-    Example Input:
-        Slist = np.array([[0, 0,  1,  4, 0,    0],
-                          [0, 0,  0,  0, 1,    0],
-                          [0, 0, -1, -6, 0, -0.1]]).T
-        M = np.array([[-1, 0,  0, 0],
-                      [ 0, 1,  0, 6],
-                      [ 0, 0, -1, 2],
-                      [ 0, 0,  0, 1]])
-        T = np.array([[0, 1,  0,     -5],
-                      [1, 0,  0,      4],
-                      [0, 0, -1, 1.6858],
-                      [0, 0,  0,      1]])
-        thetalist0 = np.array([1.5, 2.5, 3])
-        eomg = 0.01
-        ev = 0.001
-    Output:
-        (np.array([ 1.57073783,  2.99966384,  3.1415342 ]), True)
-    """
-    thetalist = np.array(thetalist0).copy()
-    i = 0
-    maxiterations = 20
-    Tsb = FKinSpace(M,Slist, thetalist)
-    Vs = np.dot(Adjoint(Tsb),se3ToVec(MatrixLog6(np.dot(TransInv(Tsb), T))))
-    err = np.linalg.norm([Vs[0], Vs[1], Vs[2]]) > eomg \
-          or np.linalg.norm([Vs[3], Vs[4], Vs[5]]) > ev
-    while err and i < maxiterations:
-        thetalist = thetalist \
-                    + np.dot(np.linalg.pinv(JacobianSpace(Slist, \
-                                                          thetalist)), Vs)
-        i = i + 1
-        Tsb = FKinSpace(M, Slist, thetalist)
-        Vs = np.dot(Adjoint(Tsb), \
-                    se3ToVec(MatrixLog6(np.dot(TransInv(Tsb), T))))
-        err = np.linalg.norm([Vs[0], Vs[1], Vs[2]]) > eomg \
-              or np.linalg.norm([Vs[3], Vs[4], Vs[5]]) > ev
-    
-    return (thetalist, not err)
+    def IK_space(self, s_poe, M, Tsd, t0, w_err, v_err):
+        
+        i = 0
+        max_iter = 20
+        thetas = np.array(t0).copy()
+        
+        Tsb = self.FK(M,s_poe, thetas)
+        Tbs = self.htm_inv(Tsb)
+        Tbd = np.dot(Tbs, Tsd)
+        Tbd_mat_exp = self.htm_to_exp_mat(Tbd)
+        Vs = np.dot(self.Adj(Tsb),self.mat_exp_to_v(Tbd_mat_exp))
+
+        keep_looking = np.linalg.norm([Vs[0], Vs[1], Vs[2]]) > w_err \
+            or np.linalg.norm([Vs[3], Vs[4], Vs[5]]) > v_err
+        while keep_looking and  i < max_iter:
+            j_s = self.get_space_jaco(thetas)
+            j_s_pinv = np.linalg.pinv(j_s)
+            thetas = thetas + np.dot(j_s_pinv, Vs)
+            i = i + 1
+            Tsb = self.FK(M,s_poe, thetas)
+            Tbs = self.htm_inv(Tsb)
+            Tbd = np.dot(Tbs, Tsd)
+            Tbd_mat_exp = self.htm_to_exp_mat(Tbd)
+            Vs = np.dot(self.Adj(Tsb),self.mat_exp_to_v(Tbd_mat_exp))
+
+            keep_looking = np.linalg.norm([Vs[0], Vs[1], Vs[2]]) > w_err \
+                or np.linalg.norm([Vs[3], Vs[4], Vs[5]]) > v_err
+        
+        return (thetas, not keep_looking)
 
 
-def JacobianSpace(Slist, thetalist):
-    """Computes the space Jacobian for an open chain robot
-    :param Slist: The joint screw axes in the space frame when the
-                  manipulator is at the home position, in the format of a
-                  matrix with axes as the columns
-    :param thetalist: A list of joint coordinates
-    :return: The space Jacobian corresponding to the inputs (6xn real
-             numbers)
-    Example Input:
-        Slist = np.array([[0, 0, 1,   0, 0.2, 0.2],
-                          [1, 0, 0,   2,   0,   3],
-                          [0, 1, 0,   0,   2,   1],
-                          [1, 0, 0, 0.2, 0.3, 0.4]]).T
-        thetalist = np.array([0.2, 1.1, 0.1, 1.2])
-    Output:
-        np.array([[  0, 0.98006658, -0.09011564,  0.95749426]
-                  [  0, 0.19866933,   0.4445544,  0.28487557]
-                  [  1,          0,  0.89120736, -0.04528405]
-                  [  0, 1.95218638, -2.21635216, -0.51161537]
-                  [0.2, 0.43654132, -2.43712573,  2.77535713]
-                  [0.2, 2.96026613,  3.23573065,  2.22512443]])
-    """
-    Js = np.array(Slist).copy().astype(np.float64)
-    T = np.eye(4)
-    for i in range(1, len(thetalist)):
-        T = np.dot(T, MatrixExp6(VecTose3(np.array(Slist)[:, i - 1] \
-                                * thetalist[i - 1])))
-        Js[:, i] = np.dot(Adjoint(T), np.array(Slist)[:, i])
-    return Js
+    def mat_exp_to_v(self, mat_exp):
+        return np.r_[[mat_exp[2][1], mat_exp[0][2], mat_exp[1][0]],
+                    [mat_exp[0][3], mat_exp[1][3], mat_exp[2][3]]]
+
+    def JacobianSpace(self, s_poe, thetas):
+        
+        Js = np.array(s_poe).copy().astype(np.float64)
+        T = np.eye(4)
+        for i in range(1, len(thetas)):
+            T = np.dot(T, MatrixExp6(VecTose3(np.array(s_poe)[:, i - 1] \
+                                    * thetas[i - 1])))
+            Js[:, i] = np.dot(Adjoint(T), np.array(s_poe)[:, i])
+        return Js
 
 def RpToTrans(R, p):
     """Converts a rotation matrix and a position vector into homogeneous
@@ -375,67 +336,9 @@ def TransInv(T):
     Rt = np.array(R).T
     return np.r_[np.c_[Rt, -np.dot(Rt, p)], [[0, 0, 0, 1]]]
 
-def MatrixLog3(R):
-    """Computes the matrix logarithm of a rotation matrix
-    :param R: A 3x3 rotation matrix
-    :return: The matrix logarithm of R
-    Example Input:
-        R = np.array([[0, 0, 1],
-                      [1, 0, 0],
-                      [0, 1, 0]])
-    Output:
-        np.array([[          0, -1.20919958,  1.20919958],
-                  [ 1.20919958,           0, -1.20919958],
-                  [-1.20919958,  1.20919958,           0]])
-    """
-    acosinput = (np.trace(R) - 1) / 2.0
-    if acosinput >= 1:
-        return np.zeros((3, 3))
-    elif acosinput <= -1:
-        if not NearZero(1 + R[2][2]):
-            omg = (1.0 / np.sqrt(2 * (1 + R[2][2]))) \
-                  * np.array([R[0][2], R[1][2], 1 + R[2][2]])
-        elif not NearZero(1 + R[1][1]):
-            omg = (1.0 / np.sqrt(2 * (1 + R[1][1]))) \
-                  * np.array([R[0][1], 1 + R[1][1], R[2][1]])
-        else:
-            omg = (1.0 / np.sqrt(2 * (1 + R[0][0]))) \
-                  * np.array([1 + R[0][0], R[1][0], R[2][0]])
-        return VecToso3(np.pi * omg)
-    else:
-        theta = np.arccos(acosinput)
-        return theta / 2.0 / np.sin(theta) * (R - np.array(R).T)
+    
 
-def MatrixLog6(T):
-    """Computes the matrix logarithm of a homogeneous transformation matrix
-    :param R: A matrix in SE3
-    :return: The matrix logarithm of R
-    Example Input:
-        T = np.array([[1, 0,  0, 0],
-                      [0, 0, -1, 0],
-                      [0, 1,  0, 3],
-                      [0, 0,  0, 1]])
-    Output:
-        np.array([[0,          0,           0,           0]
-                  [0,          0, -1.57079633,  2.35619449]
-                  [0, 1.57079633,           0,  2.35619449]
-                  [0,          0,           0,           0]])
-    """
-    R, p = TransToRp(T)
-    omgmat = MatrixLog3(R)
-    if np.array_equal(omgmat, np.zeros((3, 3))):
-        return np.r_[np.c_[np.zeros((3, 3)),
-                           [T[0][3], T[1][3], T[2][3]]],
-                     [[0, 0, 0, 0]]]
-    else:
-        theta = np.arccos((np.trace(R) - 1) / 2.0)
-        return np.r_[np.c_[omgmat,
-                           np.dot(np.eye(3) - omgmat / 2.0 \
-                           + (1.0 / theta - 1.0 / np.tan(theta / 2.0) / 2) \
-                              * np.dot(omgmat,omgmat) / theta,[T[0][3],
-                                                               T[1][3],
-                                                               T[2][3]])],
-                     [[0, 0, 0, 0]]]
+
 def se3ToVec(se3mat):
     """ Converts an se3 matrix into a spatial velocity vector
     :param se3mat: A 4x4 matrix in se3
