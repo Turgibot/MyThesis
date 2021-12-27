@@ -14,6 +14,7 @@
         <mesh file="B.stl" />
         <mesh file="E.stl" />
         <mesh file="L.stl" />
+        <mesh file="ZED.stl" scale="0.001 0.001 0.001"/>
         
         <texture  name="floor_tile" file="meshes/floor_tile.png" width="3000" height="3000" type="2d"/>
         <material name="tile" texture="floor_tile" specular="0" shininess="0" reflectance="0" emission="1" />
@@ -36,14 +37,14 @@
     </contact>
 
     <worldbody>
-        <camera fovy="45" pos="1 1 5" />
+        <camera fovy="45" pos="0 0 2" />
         <light diffuse=".5 .5 .5" pos="0 0 3" dir="0 0 -1"/>
-        <body name="target" pos="0.2 0.3 0.45" mocap="true">
-            <site name="target" type="sphere" size="0.04" rgba="1 0 0 .5"/>
+        <body name="target" pos="0.45 0.2 0.1" mocap="true">
+            <site name="target" type="sphere" size="0.02" rgba="1 0 0 .5"/>
         </body>
         
         <body name="hand" pos="0 0 0" mocap="true"/>
-        <geom name="floor_foam_block" euler="0 0 1.5708" pos="0 0 0" size="0.5 0.5 0.05" type="plane" rgba="1 0.83 0.61 1" material="foam"/>
+        <geom name="floor_foam_block" euler="0 0 0" pos="0 0 0" size="0.5 0.5 0.05" type="plane" rgba="1 0.83 0.61 1" material="foam"/>
         
         <geom name="floor_grey_tile" pos="0 0 -0.001"  size="0.7 0.7 0.05" type="plane" material="tile"/>
 
@@ -84,11 +85,26 @@
                                     <inertial pos="0 0 0" mass="0.1666" euler="-1.5708 0 0" diaginertia="0.025 0.025 0.025"/>
                                     <joint name='joint5' pos="0 0 0" axis="0 0 1" ref="0"/>
                                     <geom name="link6" type="mesh" mesh="Gripper" pos="0 0 0" euler="-1.5708 0 0" material="dark_gray"/>
-                                
-                                    <body
-                                        name="EE" pos="0 -0.0075 0.1" euler="1.5708 1.5708 1.5708">
-                                        <site name="EE" type="sphere" size="0.04" rgba="0 1 0 .75"/>
-                                    </body>
+                                        
+                                        
+                                        <body name="zed" pos="0 -0.08 0" euler="1.4 0 1.5708">  
+                                            <geom name="zed" type="mesh" mesh="ZED" pos="0 0 0"  material="gray"/>
+                                            <inertial pos="0 0 0" mass="0.159"  diaginertia="0.025 0.025 0.025"/>
+                                               
+                                                <body name="left_cam" pos="0.02 0.06 0" >
+                                                    <camera  fovy="45"  euler="0 -1.5708 -1.5708" />
+                                                    <site  type="sphere" size="0.01" rgba="0 0 1 1" />
+                                                </body>
+                                                 <body name="right_cam" pos="0.02 -0.06 0" >
+                                                    <camera  fovy="45"  euler="0 -1.5708 -1.5708" />
+                                                    <site  type="sphere" size="0.01" rgba="0 0 1 1" />
+                                                </body>
+                                               
+                                        </body>
+                                        <body
+                                            name="EE" pos="0 -0.0075 0.1" euler="1.5708 1.5708 1.5708">
+                                            <site name="EE" type="sphere" size="0.02" rgba="0 1 0 .75"/>
+                                        </body>
                                 </body>
                             </body>
                         </body>

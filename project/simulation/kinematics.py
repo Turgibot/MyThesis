@@ -118,36 +118,36 @@ class Kinematics:
 
         # joint 1
         w1 = rot_axis3(thetas[0]) @ np.array(self.s_w1)
-        q1 = np.array([0, 0, self.l1])
+        q1 = rot_axis3(thetas[0]) @ np.array([0, 0, self.base_link+self.l1])
         v1 = -1*self.cross(w1, q1)
         s1 = np.r_[w1,v1]
 
         # Joint 2 has an ofset in the -x direction 
         w2 = rot_axis3(thetas[0]) @ rot_axis2(-thetas[1]) @ np.array(self.s_w2)
-        q2 = np.array([-self.offset, 0, 0.413])
+        q2 = rot_axis3(thetas[0]) @ rot_axis2(-thetas[1]) @ np.array([-self.offset, 0, self.base_link+self.l1+self.l2])
         v2 = -1*self.cross(w2, q2)
         s2 = np.r_[w2,v2]
 
         # joint 3
         w3 = rot_axis3(thetas[0]) @ rot_axis2(-thetas[1]) @ rot_axis2(-thetas[2]) @ np.array(self.s_w3)
-        q3 = np.array([-0.0603, 0, 0])
+        q3 = rot_axis3(thetas[0]) @ rot_axis2(-thetas[1]) @ rot_axis2(-thetas[2]) @ np.array([-self.offset, 0, 0])
         v3 = -1*self.cross(w3, q3)
         s3 = np.r_[w3,v3]
         
         # joint 4
         w4 = rot_axis3(thetas[0]) @ rot_axis2(-thetas[1]) @ rot_axis2(-thetas[2]) @ rot_axis1(-thetas[3]) @ np.array(self.s_w4)
-        q4 = np.array([-0.0603, 0, 0])
+        q4 = rot_axis3(thetas[0]) @ rot_axis2(-thetas[1]) @ rot_axis2(-thetas[2]) @ rot_axis1(-thetas[3]) @ np.array([-self.offset, 0, self.base_link+self.l1+self.l2+self.l3+self.l4])
         v4 = -1*self.cross(w4, q4)
         s4 = np.r_[w4,v4]
 
         # joint 5
         w5 = rot_axis3(thetas[0]) @ rot_axis2(-thetas[1]) @ rot_axis2(-thetas[2]) @ rot_axis1(-thetas[3]) @ rot_axis2(-thetas[4]) @ np.array(self.s_w5)
-        q5 = np.array([-0.0603, 0, 0])
+        q5 = rot_axis3(thetas[0]) @ rot_axis2(-thetas[1]) @ rot_axis2(-thetas[2]) @ rot_axis1(-thetas[3]) @ rot_axis2(-thetas[4]) @ np.array([-self.offset, 0, self.base_link+self.l1+self.l2+self.l3+self.l4])
         v5 = -1*self.cross(w5, q5)
         s5 = np.r_[w5,v5]
 
         js = np.c_[s0, s1, s2, s3, s4,s5]
-        return js
+        return js.astype('float64')
 
     def htm_to_rp(self, T):
         T = np.array(T)
@@ -205,31 +205,35 @@ class Kinematics:
         return np.r_[np.c_[R, np.zeros((3, 3))],np.c_[np.dot(self.w_to_skew(p), R), R]]
 
     # devides the path to sections
-    def trajectory(self, Tstart, Tend, sections=3):
+    def trajectory(self, Tstart, Tend, sections=2):
         Tdif = Tend - Tstart
         traj_list = []
         for i in range(1, sections+1):
             traj_list.append(Tstart+(i/sections)*Tdif)
         return traj_list
     
-    def trajectoryIK(self,T_target, w_err, v_err):
+    def trajectoryIK(self,T_target, w_err, v_err, sections):
         t0 = self.robot.get_joints_pos()
         M = self.robot.M
         s_poe = self.robot.s_poe
 
         Tstart = self.FK(M, s_poe, t0)
-        traj_list = self.trajectory(Tstart, T_target)
+        traj_list = self.trajectory(Tstart, T_target, sections)
 
         for i in range(1, len(traj_list)):
             next_T = traj_list[i]
             t0 = self.IK_space(s_poe, M, next_T, t0, w_err, v_err)[0]
-            for i in range(len(t0)):
-                if t0[i]>2*np.pi:
-                    t0[i]%=2*np.pi
-                elif t0[i]< -2*np.pi:
-                    t0[i]%= -2*np.pi
+            
 
-
+        # for i in range(len(t0)):
+        #     if t0[i]>2*np.pi:
+        #         t0[i]%=2*np.pi
+        #     elif t0[i]< -2*np.pi:
+        #         t0[i]%= -2*np.pi
+        #     if t0[i] > np.pi:
+        #         t0[i] -= 2*np.pi 
+        #     elif t0[i] < -np.pi:
+        #         t0[i] += 2*np.pi
         return t0
 
     def IK_space(self, s_poe, M, Tsd, t0, w_err, v_err):
@@ -247,7 +251,7 @@ class Kinematics:
         keep_looking = np.linalg.norm([Vs[0], Vs[1], Vs[2]]) > w_err \
             or np.linalg.norm([Vs[3], Vs[4], Vs[5]]) > v_err
         while keep_looking and  i < max_iter:
-            j_s = self.get_space_jaco(thetas)
+            j_s = self.JacobianSpace(thetas)
             j_s_pinv = np.linalg.pinv(j_s)
             thetas = thetas + np.dot(j_s_pinv, Vs)
             i = i + 1
@@ -267,14 +271,16 @@ class Kinematics:
         return np.r_[[mat_exp[2][1], mat_exp[0][2], mat_exp[1][0]],
                     [mat_exp[0][3], mat_exp[1][3], mat_exp[2][3]]]
 
-    def JacobianSpace(self, s_poe, thetas):
+    def JacobianSpace(self, thetas):
         
-        Js = np.array(s_poe).copy().astype(np.float64)
-        T = np.eye(4)
+        Js = np.array(self.robot.s_poe).copy().astype(np.float64)
+        T_i = np.eye(4)
         for i in range(1, len(thetas)):
-            T = np.dot(T, MatrixExp6(VecTose3(np.array(s_poe)[:, i - 1] \
-                                    * thetas[i - 1])))
-            Js[:, i] = np.dot(Adjoint(T), np.array(s_poe)[:, i])
+            S_i_m_1 = np.array(self.robot.s_poe)[:, i - 1]
+            S_i_m_1_theta_matrix = self.v_to_matrix_expo_form( S_i_m_1 * thetas[i - 1])
+            T_i_m_1 = MatrixExp6(S_i_m_1_theta_matrix)
+            T_i = np.dot(T_i, T_i_m_1)
+            Js[:, i] = np.dot(Adjoint(T_i), np.array(self.robot.s_poe)[:, i])
         return Js
 
 def RpToTrans(R, p):

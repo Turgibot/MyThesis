@@ -19,21 +19,35 @@ class Robot:
     def __init__(self,
                 model,      # The mujoco xml generated model
                 simulation, # The mujoco simulation object
-                home_configuration = [-np.pi/2, 0, np.pi/2, 0, np.pi/2, 0],
+                home_configuration = [-np.pi/2, -np.pi/2, 0.6*np.pi, np.pi/2, 0.1*np.pi, 0],
+                right_configuration = [-0.64350111, -1.47933899,  1.62545784,  2.50322626,  0.08747117,  0.11719468],
+                bottom_right_configuration = [-1.25*np.pi, 0.2*np.pi, 0.75*np.pi, 1.25*np.pi, 1.1*np.pi, 0],
+                bottom_left_configuration = [0.25*np.pi, 0.2*np.pi, 0.75*np.pi, -0.25*np.pi, 1.1*np.pi, 0],
+                left_configuration = [-2.49809155, -1.47933899,  1.62545785,  0.63836639,  0.08747117, -0.11719467],
                 nap_configuration = [-0.5*np.pi, -0.61*np.pi, 1.025*np.pi, 0.5*np.pi, 0.38*np.pi, 0]
                 ):
         self.model = model
         self.simulation = simulation
         self.home = np.array(home_configuration)
+        self.ee_home = np.array([0, -0.05, 0.46])
+        self.right = np.array(right_configuration)
+        self.ee_right = np.array([0.2, 0, 0.5])
+        self.bottom_right = np.array(bottom_right_configuration)
+        self.ee_bottom_right = np.array([0.187, -0.0446, 0.059])
+        self.bottom_left = np.array(bottom_left_configuration)
+        self.ee_bottom_left = np.array([-0.187, -0.0446, 0.059])
+        self.left = np.array(left_configuration)
+        self.ee_left = np.array([-0.2, 0, 0.5])
         self.nap = np.array(nap_configuration)
         self.n_joints = 6
         self.take_a_nap()
-        # self.go_home()
+
         self.thetas = self.simulation.data.qpos 
         self.thetas_dot = self.simulation.data.qvel
         self.ee_config = self.get_ee_config()
         self.torques = self.simulation.data.ctrl
         self.accel = self.simulation.data.qacc
+
         # links length  in meters
         self.base_link = 0.067
         self.l1 = 0.045
@@ -42,6 +56,7 @@ class Robot:
         self.l3 = 0.2
         self.l4 = 0.104 #in the -y direction when in the zero configuration
         self.ee_link = 0.075  #in the -y direction when in the zero configuration
+
         # M matrix
         m_x = np.array([0, -1, 0])
         m_y = np.array([0, 0, 1])

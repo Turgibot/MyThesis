@@ -18,12 +18,12 @@ from sympy.matrices import Matrix, eye, zeros, ones, diag, GramSchmidt
 
 from project.simulation import kinematics
 class Control:
-    def __init__(self, robot, simulation, theta_d=[0, 0, 0, 0, 0, 0]) -> None:
+    def __init__(self, robot, simulation, theta_d=None) -> None:
         self.robot = robot
         self.model = robot.model
         self.simulation = simulation
         self.kinematics = Kinematics(robot)
-        self.theta_d = np.array(theta_d)
+        self.theta_d = theta_d if theta_d is not None else np.array(self.robot.home)
         self.thetalist= np.array(self.theta_d)
         self.d = np.zeros(self.robot.n_joints)
         self.i = np.zeros(self.robot.n_joints)
@@ -38,22 +38,12 @@ class Control:
 # -----------------------------------------------------------------------------
     
     def FK(self, thetalist=None):
-        if not thetalist:
+        if thetalist is None:
             thetalist = self.theta_d
         fk = self.kinematics.FK(self.robot.M, self.robot.s_poe, thetalist)
         return fk
 
-    def IK(self, T):
-        eomg = 0.000000000000001
-        ev = 0.00000000000001
-        theta_d, success = IKinSpace(Slist=self.robot.s_poe, M=self.robot.M, T=T, thetalist0 = np.array([np.pi/3, np.pi,  0, 0, 0, 0]), eomg=eomg, ev = ev)
-        if not success:
-            print("IK failed")
-            exit(1)
-        theta_d = np.array(theta_d)
-        self.theta_d = theta_d
-        return theta_d
-        # self.theta_d [theta_d > np.pi] = theta_d -np.pi  
+   
     #calculate the necessary velocity to drive each joint to a desired theta_d 
     def PID(self):
                
@@ -71,15 +61,15 @@ class Control:
         g = -1 * self.simulation.data.qfrc_bias[:]
         return g
 
-    def _IK(self, T_target):
+    def IK(self, T_target, sections=5):
         eomg = 0.000000000000001
         ev = 0.00000000000001
-        thetas = self.kinematics.trajectoryIK(T_target, eomg, ev)
-        for i in range(len(thetas)):
-            if thetas[i]>np.pi:
-                thetas[i]-=2*np.pi
-            elif thetas[i]<-np.pi:
-                thetas[i]+=2*np.pi
+        thetas = self.kinematics.trajectoryIK(T_target, eomg, ev, sections)
+        # for i in range(len(thetas)):
+        #     if thetas[i]>np.pi:
+        #         thetas[i]-=2*np.pi
+        #     elif thetas[i]<-np.pi:
+        #         thetas[i]+=2*np.pi
         return thetas
 
         
