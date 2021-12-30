@@ -18,7 +18,7 @@ import cv2
 from .markers import Arrow
 from .utilities import *
 class Mujocoation:
-    def __init__(self, path_to_xml):
+    def __init__(self, path_to_xml, unity):
         self.xml = path_to_xml
         try:
             self.model = mjc.load_model_from_path(self.xml)
@@ -26,14 +26,14 @@ class Mujocoation:
             print("cwd: {}".format(os.getcwd()))
             raise Exception("Mujoco failed to load MJCF file from path {}".format(self.xml))
         self.simulation = mjc.MjSim(self.model)
+        self.unity = unity
         self.viewer = mjc.MjViewer(self.simulation)
         self.cam = self.viewer.cam
         self.cam.distance = 2
         self.cam.azimuth = -90
         self.cam.elevation = -2
         self.cam.lookat[:] = [0, 0, 0.2]
-        self.offscreen = None
-        self.flag = True
+
 
 
     # This method is for testing purpose only
@@ -47,17 +47,16 @@ class Mujocoation:
         self.simulation.step()
         self.add_arrows()
         self.viewer.render()
-        if self.flag:
-            self.offscreen = mjc.MjRenderContextOffscreen(self.simulation, 0)
-            self.offscreen.render(1920, 1080, 1)
-            rgb = self.offscreen.read_pixels(1920, 1080)[1]
-            rgb =  cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
-            rgb = cv2.flip(rgb, 0)
-            cv2.imwrite("/home/guy/Pictures/test_image.png", rgb)
-            self.flag = False    
-            # glfw.destroy_window(w)
-       
+        qpos = self.simulation.data.qpos
 
+        # pos = numpy.ndarray(3*nmocap), quat = numpy.ndarray(4*nmocap)
+        moc_pos = np.array(self.simulation.data.mocap_pos)
+        moc_pos = moc_pos.reshape(len(moc_pos)*3)
+        moc_quat = np.array(self.simulation.data.mocap_quat)
+        moc_quat = moc_quat.reshape(len(moc_quat)*4)
+        self.unity.setqpos(qpos)
+        self.unity.setmocap(moc_pos, moc_quat)
+        
     def play(self, steps = 10e10):
         counter = 0
         while steps > counter:

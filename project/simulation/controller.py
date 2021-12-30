@@ -62,14 +62,9 @@ class Control:
         return g
 
     def IK(self, T_target, sections=5):
-        eomg = 0.000000000000001
-        ev = 0.00000000000001
+        eomg = 1e-16
+        ev = 1e-14
         thetas = self.kinematics.trajectoryIK(T_target, eomg, ev, sections)
-        # for i in range(len(thetas)):
-        #     if thetas[i]>np.pi:
-        #         thetas[i]-=2*np.pi
-        #     elif thetas[i]<-np.pi:
-        #         thetas[i]+=2*np.pi
         return thetas
 
         
