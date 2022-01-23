@@ -47,15 +47,16 @@ class Mujocoation:
         self.simulation.step()
         self.add_arrows()
         self.viewer.render()
-        qpos = self.simulation.data.qpos
+        if self.unity:
+            qpos = self.simulation.data.qpos
 
-        # pos = numpy.ndarray(3*nmocap), quat = numpy.ndarray(4*nmocap)
-        moc_pos = np.array(self.simulation.data.mocap_pos)
-        moc_pos = moc_pos.reshape(len(moc_pos)*3)
-        moc_quat = np.array(self.simulation.data.mocap_quat)
-        moc_quat = moc_quat.reshape(len(moc_quat)*4)
-        self.unity.setqpos(qpos)
-        self.unity.setmocap(moc_pos, moc_quat)
+            # pos = numpy.ndarray(3*nmocap), quat = numpy.ndarray(4*nmocap)
+            moc_pos = np.array(self.simulation.data.mocap_pos)
+            moc_pos = moc_pos.reshape(len(moc_pos)*3)
+            moc_quat = np.array(self.simulation.data.mocap_quat)
+            moc_quat = moc_quat.reshape(len(moc_quat)*4)
+            self.unity.setqpos(qpos)
+            self.unity.setmocap(moc_pos, moc_quat)
         
     def play(self, steps = 10e10):
         counter = 0

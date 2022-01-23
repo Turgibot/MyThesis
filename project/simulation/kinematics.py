@@ -48,7 +48,7 @@ class Kinematics:
     
 
     # represents a 1*6 velocity vector v in  a 4x4 matrix for e^[v]
-    def v_to_matrix_expo_form(self, V):
+    def v6_to_matrix_expo_form(self, V):
         skew = self.w_to_skew([V[0], V[1], V[2]])
         v = [V[3], V[4], V[5]]
         skew_v = np.c_[skew, v]
@@ -73,8 +73,8 @@ class Kinematics:
         cols = np.c_[rotation_mat, np.dot(g,v)/theta]
         return np.r_[cols,
                      [[0, 0, 0, 1]]]
-    def v_to_htm(self, v):
-        exp_mat = self.v_to_matrix_expo_form(v)
+    def v6_to_htm(self, v):
+        exp_mat = self.v6_to_matrix_expo_form(v)
         return self.mat_exp_to_htm(exp_mat)
     
     def cross(self, w, q):
@@ -146,7 +146,7 @@ class Kinematics:
     def FK(self, M, s_poe, thetas):
         T = np.array(M)
         for i in range(len(thetas) - 1, -1, -1):
-            mat_exp = self.v_to_matrix_expo_form(np.array(s_poe)[:, i] * thetas[i])
+            mat_exp = self.v6_to_matrix_expo_form(np.array(s_poe)[:, i] * thetas[i])
             T = np.dot(self.mat_exp_to_htm(mat_exp), T)
         return T
     
@@ -241,7 +241,7 @@ class Kinematics:
             # calculate Ti-1,i from its matrix exponential form
             prev_S = self.robot.s_poe[:, i - 1]
             prev_S_theta = prev_S * thetas[i - 1]
-            prev_S_theta_mat_exp = self.v_to_matrix_expo_form(prev_S_theta)
+            prev_S_theta_mat_exp = self.v6_to_matrix_expo_form(prev_S_theta)
             T_i = self.mat_exp_to_htm(prev_S_theta_mat_exp)
             # calculate T_0,i by multiplying T[0,i] = T[0,i-1] * T[i-1,i]  
             T_0i = np.dot(T_0i, T_i)

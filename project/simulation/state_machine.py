@@ -16,15 +16,17 @@ from .utilities import *
 import mujoco_py as mjc
 
 class StateMachine:
-    def __init__(self, robot, scene, control):
+    def __init__(self, robot, scene, control, targets_pos=None):
         
         self.robot = robot
         self.scene = scene
         self.control = control
         self.simulation = self.scene.simulation
         self.model = self.scene.model
-        self.targets_pos = [self.scene.get_target_pos_euler()[0], [-0.4, 0.1, 0.3],[0.4, 0.15, 0.55],[-0.17, 0.1, 0.1]]
-        # self.targets_pos = [self.scene.get_target_pos_euler()[0]]
+        if targets_pos:
+            self.targets_pos = targets_pos
+        else:
+            self.targets_pos = [self.scene.get_target_pos_euler()[0], [-0.4, 0.1, 0.3],[0.4, 0.15, 0.55],[-0.17, 0.1, 0.1]]
         self.states = {}
         self.state = 'home'
         self.counter = 0

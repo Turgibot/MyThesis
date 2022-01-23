@@ -28,7 +28,7 @@ class Control:
         self.d = np.zeros(self.robot.n_joints)
         self.i = np.zeros(self.robot.n_joints)
         self.prev_err = np.subtract(self.theta_d, self.simulation.data.qpos[:])
-        self.kp = 0.25
+        self.kp = 0.5
         self.ki = 0.00000001
         self.kd = 0.1
         
