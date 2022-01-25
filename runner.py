@@ -1,7 +1,7 @@
 import os, time, sys
 import multiprocessing as mp
 import IK_multiple_targets as simulate
-
+import server
 
 #parameters
 with_unity = True
@@ -21,8 +21,11 @@ if __name__== "__main__":
     Unity and mujoco are up and running first
     --------------------------------------------------------------------------------
     """
+    bridge = mp.Process(target=server.run)
     unity = mp.Process(target=start_unity)
     mujoco = mp.Process(target=simulate.run, args=(with_unity,))
+
+    bridge.start()
     unity.start()
     mujoco.start()
    
@@ -33,7 +36,7 @@ if __name__== "__main__":
     --------------------------------------------------------------------------------
     """
     
-
+    bridge.join()
     unity.join()
     mujoco.join()
    
