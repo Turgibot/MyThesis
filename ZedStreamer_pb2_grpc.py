@@ -24,6 +24,11 @@ class ZedStreamerStub(object):
                 request_serializer=ZedStreamer__pb2.Image.SerializeToString,
                 response_deserializer=ZedStreamer__pb2.Received.FromString,
                 )
+        self.SendParams = channel.unary_unary(
+                '/zedstreamer.ZedStreamer/SendParams',
+                request_serializer=ZedStreamer__pb2.Params.SerializeToString,
+                response_deserializer=ZedStreamer__pb2.Received.FromString,
+                )
 
 
 class ZedStreamerServicer(object):
@@ -41,6 +46,12 @@ class ZedStreamerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def SendParams(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ZedStreamerServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -52,6 +63,11 @@ def add_ZedStreamerServicer_to_server(servicer, server):
             'SendVideo': grpc.stream_unary_rpc_method_handler(
                     servicer.SendVideo,
                     request_deserializer=ZedStreamer__pb2.Image.FromString,
+                    response_serializer=ZedStreamer__pb2.Received.SerializeToString,
+            ),
+            'SendParams': grpc.unary_unary_rpc_method_handler(
+                    servicer.SendParams,
+                    request_deserializer=ZedStreamer__pb2.Params.FromString,
                     response_serializer=ZedStreamer__pb2.Received.SerializeToString,
             ),
     }
@@ -94,6 +110,23 @@ class ZedStreamer(object):
             metadata=None):
         return grpc.experimental.stream_unary(request_iterator, target, '/zedstreamer.ZedStreamer/SendVideo',
             ZedStreamer__pb2.Image.SerializeToString,
+            ZedStreamer__pb2.Received.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SendParams(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/zedstreamer.ZedStreamer/SendParams',
+            ZedStreamer__pb2.Params.SerializeToString,
             ZedStreamer__pb2.Received.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

@@ -12,7 +12,7 @@ def start_unity():
         print("unity is loading")
         if not dev_mode:
             os.system("./Robot/unitybot.x86_64 &")
-            time.sleep(3)
+          
 
 if __name__== "__main__":
 

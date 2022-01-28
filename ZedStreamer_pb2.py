@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x11ZedStreamer.proto\x12\x0bzedstreamer\":\n\x05Image\x12\r\n\x05width\x18\x01 \x01(\x05\x12\x0e\n\x06height\x18\x02 \x01(\x05\x12\x12\n\nimage_data\x18\x03 \x01(\x0c\"\x17\n\x08Received\x12\x0b\n\x03\x61\x63k\x18\x01 \x01(\x08\x32\x83\x01\n\x0bZedStreamer\x12\x38\n\tSendImage\x12\x12.zedstreamer.Image\x1a\x15.zedstreamer.Received\"\x00\x12:\n\tSendVideo\x12\x12.zedstreamer.Image\x1a\x15.zedstreamer.Received\"\x00(\x01\x62\x06proto3'
+  serialized_pb=b'\n\x11ZedStreamer.proto\x12\x0bzedstreamer\":\n\x05Image\x12\r\n\x05width\x18\x01 \x01(\x05\x12\x0e\n\x06height\x18\x02 \x01(\x05\x12\x12\n\nimage_data\x18\x03 \x01(\x0c\"\x17\n\x08Received\x12\x0b\n\x03\x61\x63k\x18\x01 \x01(\x08\"\x16\n\x06Params\x12\x0c\n\x04\x64\x61ta\x18\x01 \x03(\x05\x32\xbf\x01\n\x0bZedStreamer\x12\x38\n\tSendImage\x12\x12.zedstreamer.Image\x1a\x15.zedstreamer.Received\"\x00\x12:\n\tSendVideo\x12\x12.zedstreamer.Image\x1a\x15.zedstreamer.Received\"\x00(\x01\x12:\n\nSendParams\x12\x13.zedstreamer.Params\x1a\x15.zedstreamer.Received\"\x00\x62\x06proto3'
 )
 
 
@@ -102,8 +102,41 @@ _RECEIVED = _descriptor.Descriptor(
   serialized_end=117,
 )
 
+
+_PARAMS = _descriptor.Descriptor(
+  name='Params',
+  full_name='zedstreamer.Params',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='data', full_name='zedstreamer.Params.data', index=0,
+      number=1, type=5, cpp_type=1, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=119,
+  serialized_end=141,
+)
+
 DESCRIPTOR.message_types_by_name['Image'] = _IMAGE
 DESCRIPTOR.message_types_by_name['Received'] = _RECEIVED
+DESCRIPTOR.message_types_by_name['Params'] = _PARAMS
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Image = _reflection.GeneratedProtocolMessageType('Image', (_message.Message,), {
@@ -120,6 +153,13 @@ Received = _reflection.GeneratedProtocolMessageType('Received', (_message.Messag
   })
 _sym_db.RegisterMessage(Received)
 
+Params = _reflection.GeneratedProtocolMessageType('Params', (_message.Message,), {
+  'DESCRIPTOR' : _PARAMS,
+  '__module__' : 'ZedStreamer_pb2'
+  # @@protoc_insertion_point(class_scope:zedstreamer.Params)
+  })
+_sym_db.RegisterMessage(Params)
+
 
 
 _ZEDSTREAMER = _descriptor.ServiceDescriptor(
@@ -129,8 +169,8 @@ _ZEDSTREAMER = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=120,
-  serialized_end=251,
+  serialized_start=144,
+  serialized_end=335,
   methods=[
   _descriptor.MethodDescriptor(
     name='SendImage',
@@ -148,6 +188,16 @@ _ZEDSTREAMER = _descriptor.ServiceDescriptor(
     index=1,
     containing_service=None,
     input_type=_IMAGE,
+    output_type=_RECEIVED,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='SendParams',
+    full_name='zedstreamer.ZedStreamer.SendParams',
+    index=2,
+    containing_service=None,
+    input_type=_PARAMS,
     output_type=_RECEIVED,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,

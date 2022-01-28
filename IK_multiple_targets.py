@@ -1,6 +1,6 @@
 
 import multiprocessing as mp
-
+import time
 from project.simulation.robot import Robot
 from project.simulation.scene import *
 from project.simulation.state_machine import StateMachine
@@ -13,6 +13,7 @@ def run(with_unity):
    
     unity = None
     if with_unity:
+        time.sleep(2)
         unity = mjremote()
         while not unity._s:
             unity.connect()

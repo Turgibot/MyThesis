@@ -5,6 +5,7 @@ package zedstreamer;
 service ZedStreamer{
   rpc SendImage(Image) returns (Received){}
   rpc SendVideo(stream Image) returns (Received){}
+  rpc SendParams(Params) returns (Received){}
 }
 
 message Image {
@@ -15,4 +16,9 @@ message Image {
 
 message Received{
   bool ack = 1;
+}
+
+
+message Params{
+  repeated int32 data =1;
 }

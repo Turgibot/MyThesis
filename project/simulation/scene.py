@@ -10,6 +10,7 @@ This class contains the static robot 3d object. It collects and interfaces stati
 Note that dynamic data is collected via the dynamics.py file
 
 """
+import time
 import mujoco_py as mjc
 import os
 import numpy as np
@@ -27,12 +28,13 @@ class Mujocoation:
             raise Exception("Mujoco failed to load MJCF file from path {}".format(self.xml))
         self.simulation = mjc.MjSim(self.model)
         self.unity = unity
-        self.viewer = mjc.MjViewer(self.simulation)
-        self.cam = self.viewer.cam
-        self.cam.distance = 2
-        self.cam.azimuth = -90
-        self.cam.elevation = -2
-        self.cam.lookat[:] = [0, 0, 0.2]
+        if(self.unity is None):
+            self.viewer = mjc.MjViewer(self.simulation)
+            self.cam = self.viewer.cam
+            self.cam.distance = 2
+            self.cam.azimuth = -90
+            self.cam.elevation = -2
+            self.cam.lookat[:] = [0, 0, 0.2]
 
 
 
@@ -45,9 +47,10 @@ class Mujocoation:
     
     def show_step(self):
         self.simulation.step()
-        self.add_arrows()
-        self.viewer.render()
-        if self.unity:
+        if(self.unity is None):
+            self.add_arrows()
+            self.viewer.render()
+        else:
             qpos = self.simulation.data.qpos
 
             # pos = numpy.ndarray(3*nmocap), quat = numpy.ndarray(4*nmocap)
@@ -57,7 +60,8 @@ class Mujocoation:
             moc_quat = moc_quat.reshape(len(moc_quat)*4)
             self.unity.setqpos(qpos)
             self.unity.setmocap(moc_pos, moc_quat)
-        
+            time.sleep(0.002)
+            
     def play(self, steps = 10e10):
         counter = 0
         while steps > counter:

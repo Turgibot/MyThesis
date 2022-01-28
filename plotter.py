@@ -6,6 +6,7 @@ from turtle import update
 from typing import AsyncIterable, Iterable
 
 import grpc
+from scipy.__config__ import show
 import ZedStreamer_pb2 as ZedStreamer_pb2
 import ZedStreamer_pb2_grpc as ZedStreamer_pb2_grpc
 import numpy as np
@@ -15,9 +16,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import mpl_toolkits.mplot3d.axes3d as p3
 
-import os
-
-
+#TODO implement singleton
 class SimHandler():
     __instance = None
     @staticmethod 
@@ -35,14 +34,17 @@ class SimHandler():
         
         self.params = [50, 50]
 
-    def set_params(self, conn, sim_params):
+    async def set_params(self, conn):
         while True:
             data = conn.recv()
-            sim_params[0] = data[0]
-            sim_params[1] = data[1]
-            
+            self.params[0] = data[0]
+            self.params[1] = data[1]
+            print("received", data)
 
-    def getSpikesFrom2Frames(self, prev_frame, frame, pos_th, neg_th):
+    def getSpikesFrom2Frames(self, prev_frame, frame):
+        
+        pos_th = self.params[0]
+        neg_th = self.params[1]
 
         deltas = np.array(np.array(prev_frame)-np.array(frame), dtype=np.int8)
         deltas = np.where(deltas == 1, 0, deltas)
@@ -51,18 +53,18 @@ class SimHandler():
         deltas = np.where(deltas < -neg_th, -1, deltas)
         deltas = np.where(deltas > 1, 0, deltas)
         deltas = np.where(deltas < -1 , 0, deltas)
+
+        print(self.params)
         
         return deltas
 
-    def show_images(self, conn):
-        name = "Stereo Camera Simulator"
+    async def show_images(self, conn):
+        name = "ZED Stereo Camera Simulator"
         cv2.startWindowThread()
         cv2.namedWindow(name, cv2.WINDOW_AUTOSIZE)
-
         time_before = time.time()
         fps = "FPS: 30"
         while True:
-            
             image = conn.recv()
             frame = np.array(list(image.image_data), dtype = np.uint8)
             frame = frame.reshape((image.height*2, image.width, 3))
@@ -72,25 +74,21 @@ class SimHandler():
             
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame = cv2.flip(frame, 0)
-            # cv2.putText(frame, fps, (7, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 1, cv2.LINE_AA)
+            cv2.putText(frame, fps, (7, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 1, cv2.LINE_AA)
             cv2.imshow(name, frame)
             cv2.waitKey(1)
             time_after = time.time()
             fps = "FPS: "+str(1//(time_after-time_before))
             time_before = time_after
 
-    def show_spikes(self, conn, sim_params):
-        name = "Stereo Event Camera Simulator"
+    async def show_spikes(self, conn):
+        name = "DVS Stereo Camera Simulator"
         prev_frame = None
         colored_frame = None
         cv2.startWindowThread()
         cv2.namedWindow(name, cv2.WINDOW_AUTOSIZE)
         while True:
             image = conn.recv()
-                    
-            pos_th = sim_params[0]
-            neg_th = sim_params[1]
-
             frame = np.array(list(image.image_data), dtype = np.uint8)
             frame = frame.reshape((image.height*2, image.width, 3))
             left = frame[:image.height]
@@ -101,7 +99,7 @@ class SimHandler():
             frame = cv2.flip(frame, 0)
             src_shape = (frame.shape[0], frame.shape[1], 3) 
             if prev_frame is not None:
-                spikes_frame = self.getSpikesFrom2Frames(prev_frame, frame, pos_th, neg_th).flatten()
+                spikes_frame = self.getSpikesFrom2Frames(prev_frame, frame).flatten()
                 shape = [int(x) for x in spikes_frame.shape]
                 colored_frame = np.zeros(shape=shape+[3], dtype="uint8")
                 colored_frame[spikes_frame==1] = [255, 0, 0] 
@@ -170,38 +168,37 @@ def startServer(images, sim_params, zed_conn, spikes_conn, params_parent_con):
     asyncio.get_event_loop().run_until_complete(serve(servicer))
 
 
-
-
-
-
-manager = mp.Manager()
-zed_images = manager.list()
-sim_params = manager.list()
-
-
-def run():
-    sim_params.append(50)
-    sim_params.append(50)
+async def run_the_show(zed_child_con,spikes_child_con,params_child_con):
     handler = SimHandler()
+    zed_task =  asyncio.create_task(handler.show_images(zed_child_con))
+    # spikes_task =  asyncio.create_task(handler.show_spikes(spikes_child_con))
+    # params_task =  asyncio.create_task(handler.set_params(params_child_con))
+    await asyncio.sleep(1)
+
+
+def start_the_show(zed_child_con,spikes_child_con,params_child_con):
+    asyncio.get_event_loop().run_forever(run_the_show(zed_child_con,spikes_child_con,params_child_con))
+
+# use a pipe to transfer image stream
+def run():
+    zed_images = []
+    sim_params = []
+ 
     zed_parent_con, zed_child_con = mp.Pipe()
     spikes_parent_con, spikes_child_con = mp.Pipe()
     params_parent_con, params_child_con = mp.Pipe()
 
     p0 = mp.Process(target=startServer, args=(zed_images, sim_params, zed_parent_con, spikes_parent_con, params_parent_con))
-    p1 = mp.Process(target=handler.show_images, args=(zed_child_con,))
-    p2 = mp.Process(target=handler.show_spikes, args=(spikes_child_con, sim_params))
-    p3 = mp.Process(target=handler.set_params, args=(params_child_con,sim_params))
+    p1 = mp.Process(target=start_the_show, args=(zed_child_con,spikes_child_con,params_child_con))
+
 
     p0.start()
     p1.start()
-    p2.start()
-    p3.start()
+
    
     p0.join()
     p1.join()
-    p2.join()
-    p3.join()
-   
+
 
 if __name__ == "__main__":
     run()
