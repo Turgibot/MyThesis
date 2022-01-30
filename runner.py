@@ -5,7 +5,8 @@ import server
 
 #parameters
 with_unity = True
-dev_mode = True
+# dev_mode = True
+dev_mode = False
 
 def start_unity():
     if with_unity:
@@ -18,21 +19,31 @@ if __name__== "__main__":
 
     """
     --------------------------------------------------------------------------------
-    Unity and mujoco are up and running first
+    1. Bridge to start a server that listens to unity data
+    2. Unity to start a unity app
+    3. Simulate to start a mujoco script 
     --------------------------------------------------------------------------------
     """
     bridge = mp.Process(target=server.run)
     unity = mp.Process(target=start_unity)
     mujoco = mp.Process(target=simulate.run, args=(with_unity,))
 
+    """
+    --------------------------------------------------------------------------------
+    Start processes in order
+    --------------------------------------------------------------------------------
+    """
+
     bridge.start()
     unity.start()
+    if not dev_mode:
+        time.sleep(3)
     mujoco.start()
    
 
     """
     --------------------------------------------------------------------------------
-    Create a pipe from unity to target script to transfer ZED camera input
+    joinn processes
     --------------------------------------------------------------------------------
     """
     

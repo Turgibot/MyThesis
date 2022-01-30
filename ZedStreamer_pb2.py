@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x11ZedStreamer.proto\x12\x0bzedstreamer\":\n\x05Image\x12\r\n\x05width\x18\x01 \x01(\x05\x12\x0e\n\x06height\x18\x02 \x01(\x05\x12\x12\n\nimage_data\x18\x03 \x01(\x0c\"\x17\n\x08Received\x12\x0b\n\x03\x61\x63k\x18\x01 \x01(\x08\"\x16\n\x06Params\x12\x0c\n\x04\x64\x61ta\x18\x01 \x03(\x05\x32\xbf\x01\n\x0bZedStreamer\x12\x38\n\tSendImage\x12\x12.zedstreamer.Image\x1a\x15.zedstreamer.Received\"\x00\x12:\n\tSendVideo\x12\x12.zedstreamer.Image\x1a\x15.zedstreamer.Received\"\x00(\x01\x12:\n\nSendParams\x12\x13.zedstreamer.Params\x1a\x15.zedstreamer.Received\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\x11ZedStreamer.proto\x12\x0bzedstreamer\":\n\x05Image\x12\r\n\x05width\x18\x01 \x01(\x05\x12\x0e\n\x06height\x18\x02 \x01(\x05\x12\x12\n\nimage_data\x18\x03 \x01(\x0c\":\n\x05\x44\x65pth\x12\r\n\x05width\x18\x01 \x01(\x05\x12\x0e\n\x06height\x18\x02 \x01(\x05\x12\x12\n\nimage_data\x18\x03 \x01(\x0c\"\x17\n\x08Received\x12\x0b\n\x03\x61\x63k\x18\x01 \x01(\x08\"\x16\n\x06Params\x12\x0c\n\x04\x64\x61ta\x18\x01 \x03(\x05\x32\xfb\x01\n\x0bZedStreamer\x12\x38\n\tSendImage\x12\x12.zedstreamer.Image\x1a\x15.zedstreamer.Received\"\x00\x12:\n\tSendVideo\x12\x12.zedstreamer.Image\x1a\x15.zedstreamer.Received\"\x00(\x01\x12:\n\tSendDepth\x12\x12.zedstreamer.Depth\x1a\x15.zedstreamer.Received\"\x00(\x01\x12:\n\nSendParams\x12\x13.zedstreamer.Params\x1a\x15.zedstreamer.Received\"\x00\x62\x06proto3'
 )
 
 
@@ -71,6 +71,52 @@ _IMAGE = _descriptor.Descriptor(
 )
 
 
+_DEPTH = _descriptor.Descriptor(
+  name='Depth',
+  full_name='zedstreamer.Depth',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='width', full_name='zedstreamer.Depth.width', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='height', full_name='zedstreamer.Depth.height', index=1,
+      number=2, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='image_data', full_name='zedstreamer.Depth.image_data', index=2,
+      number=3, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"",
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=94,
+  serialized_end=152,
+)
+
+
 _RECEIVED = _descriptor.Descriptor(
   name='Received',
   full_name='zedstreamer.Received',
@@ -98,8 +144,8 @@ _RECEIVED = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=94,
-  serialized_end=117,
+  serialized_start=154,
+  serialized_end=177,
 )
 
 
@@ -130,11 +176,12 @@ _PARAMS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=119,
-  serialized_end=141,
+  serialized_start=179,
+  serialized_end=201,
 )
 
 DESCRIPTOR.message_types_by_name['Image'] = _IMAGE
+DESCRIPTOR.message_types_by_name['Depth'] = _DEPTH
 DESCRIPTOR.message_types_by_name['Received'] = _RECEIVED
 DESCRIPTOR.message_types_by_name['Params'] = _PARAMS
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
@@ -145,6 +192,13 @@ Image = _reflection.GeneratedProtocolMessageType('Image', (_message.Message,), {
   # @@protoc_insertion_point(class_scope:zedstreamer.Image)
   })
 _sym_db.RegisterMessage(Image)
+
+Depth = _reflection.GeneratedProtocolMessageType('Depth', (_message.Message,), {
+  'DESCRIPTOR' : _DEPTH,
+  '__module__' : 'ZedStreamer_pb2'
+  # @@protoc_insertion_point(class_scope:zedstreamer.Depth)
+  })
+_sym_db.RegisterMessage(Depth)
 
 Received = _reflection.GeneratedProtocolMessageType('Received', (_message.Message,), {
   'DESCRIPTOR' : _RECEIVED,
@@ -169,8 +223,8 @@ _ZEDSTREAMER = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=144,
-  serialized_end=335,
+  serialized_start=204,
+  serialized_end=455,
   methods=[
   _descriptor.MethodDescriptor(
     name='SendImage',
@@ -193,9 +247,19 @@ _ZEDSTREAMER = _descriptor.ServiceDescriptor(
     create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
+    name='SendDepth',
+    full_name='zedstreamer.ZedStreamer.SendDepth',
+    index=2,
+    containing_service=None,
+    input_type=_DEPTH,
+    output_type=_RECEIVED,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
     name='SendParams',
     full_name='zedstreamer.ZedStreamer.SendParams',
-    index=2,
+    index=3,
     containing_service=None,
     input_type=_PARAMS,
     output_type=_RECEIVED,

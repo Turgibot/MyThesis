@@ -5,10 +5,18 @@ package zedstreamer;
 service ZedStreamer{
   rpc SendImage(Image) returns (Received){}
   rpc SendVideo(stream Image) returns (Received){}
+  rpc SendDepth(stream Depth) returns (Received){}
   rpc SendParams(Params) returns (Received){}
 }
 
 message Image {
+  int32 width = 1;
+  int32 height = 2;
+  bytes image_data = 3;
+}
+
+
+message Depth {
   int32 width = 1;
   int32 height = 2;
   bytes image_data = 3;
