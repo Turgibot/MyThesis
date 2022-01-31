@@ -10,7 +10,9 @@ This class solves the IK problem and creates a list of states.
 Each state is a dictionary of joint torques
 
 """
+import enum
 import numpy as np
+from sympy import N
 
 from .utilities import *
 import mujoco_py as mjc
@@ -94,3 +96,98 @@ class StateMachine:
         self.output()
         self.next_state()
 
+class States:
+    INIT = 0
+    HOME = 100
+    STEPS = 200
+    TARGET = 300
+    
+class SimpleStateMachine:
+    def __init__(self, robot, scene, control, targets_pos=None) -> None:
+        self.robot = robot
+        self.scene = scene
+        self.control = control
+        self.simulation = self.scene.simulation
+        self.model = self.scene.model
+        
+        # targets are [x, y, z] coordinates
+        self.targets = [self.scene.get_target_pos_euler()[0]]
+        #th to position ee infront of target
+        self.y_th = 0.5
+        self.thetas = None
+        self.curr_state_target = self.robot.ee_home
+        self.curr_final_target = self.targets[0]
+        self.target_orientation = np.array([[0, 0, 1],
+                                            [1, 0, 0],
+                                            [0, 1, 0]])
+        self.curr_state_configuration = []
+        self.steps_positions = []
+        self.reached_th = 0.01
+        self.curr_state = States.INIT
+        self.prev_state = States.INIT
+        self.targets_counter = 0
+        self.steps_counter = 0
+        self.num_steps = 10
+        self.distance = 0
+    
+    def next_state(self):
+
+        # next state depending on current state and the distance between the EE to the current state target
+
+        self.distance = np.linalg.norm(self.robot.get_ee_position() - self.curr_state_target)
+        
+        # init state to get data for the current target
+        if self.curr_state == States.INIT:
+            #set final target
+            self.curr_final_target = self.targets[self.targets_counter]
+            #set step target and configuration
+            self.curr_state_target = self.robot.ee_home
+            self.curr_state_configuration = self.control.FK(self.robot.home)
+            #next state
+            self.curr_state = States.HOME
+            #next time that the INIT state is reached move on to the next target
+            self.targets_counter += 1
+        
+        # primary condition to move to the next step is the distance to the current state target
+        elif self.distance < self.reached_th:
+            if self.curr_state == States.HOME:
+                # draw the target in its new location
+                self.simulation.data.set_mocap_pos("target",  self.curr_final_target)
+                # create the next states, positions
+                self.steps_positions = [] #empty list
+                curr_ee_pos = self.robot.get_ee_position()
+                diff = self.curr_final_target - curr_ee_pos
+                for i in range(self.num_steps):
+                    self.steps_positions.append((curr_ee_pos+((i+1)/self.num_steps)*diff))
+                # set the next state as the steps
+                self.curr_state = States.STEPS 
+                self.set_step()
+            
+            elif self.curr_state == States.STEPS+self.steps_counter:
+                self.steps_counter += 1
+                if self.steps_counter == self.num_steps:
+                    self.curr_state = States.TARGET
+                else:
+                    self.set_step()
+
+            elif self.curr_state == States.TARGET:
+                self.curr_state = States.INIT
+
+    def output(self):
+        #output is dependant of the current state
+        if self.curr_state != self.prev_state:
+            if self.curr_state == States.HOME:
+                self.control.theta_d = self.robot.home
+            else:
+                self.control.theta_d = self.control.IK(self.curr_state_configuration)
+            self.prev_state = self.curr_state
+        
+    def set_step(self):
+        self.curr_state_target = self.steps_positions[self.steps_counter]
+        self.curr_state_configuration = np.r_[np.c_[self.target_orientation, self.curr_state_target], [[0,0,0,1]]]
+        self.curr_state = States.STEPS + self.steps_counter
+    
+    def eval(self):
+        print(self.curr_state)
+        self.next_state()
+        self.output()

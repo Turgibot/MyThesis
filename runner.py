@@ -5,14 +5,16 @@ import server
 
 #parameters
 with_unity = True
-# dev_mode = True
-dev_mode = False
+dev_mode = True
+# dev_mode = False
+
+lab_scene = 'unitybot.x86_64'
 
 def start_unity():
     if with_unity:
         print("unity is loading")
         if not dev_mode:
-            os.system("./Robot/unitybot.x86_64 &")
+            os.system("./Robot/"+lab_scene+" &")
           
 
 if __name__== "__main__":

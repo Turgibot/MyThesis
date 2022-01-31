@@ -9,14 +9,12 @@ Real robot has a builtin PID controller so the input is simply the joint values
 """
 
 
-import re
+
 import numpy as np
 from .utilities import *
 from .kinematics import Kinematics
 import sympy as sp
-from sympy.matrices import Matrix, eye, zeros, ones, diag, GramSchmidt
 
-from project.simulation import kinematics
 class Control:
     def __init__(self, robot, simulation, theta_d=None) -> None:
         self.robot = robot
@@ -61,11 +59,14 @@ class Control:
         g = -1 * self.simulation.data.qfrc_bias[:]
         return g
 
-    def IK(self, T_target, sections=5):
-        eomg = 1e-16
-        ev = 1e-14
-        thetas = self.kinematics.trajectoryIK(T_target, eomg, ev, sections)
+    def trajectoryIK(self, T_target, T_start = None, sections=5, eomg=1e-16, ev=1e-14):
+        thetas = self.kinematics.trajectoryIK(T_target, T_start, eomg, ev, sections)
         return thetas
+    def CartesianSpaceIK(self, T_target, Tf=5, N=5, method=5):
+        htm_list = self.kinematics.CartesianTrajectory(T_target, Tf, N, method)
+        return htm_list
 
-        
+    def IK(self, T_target, eomg=1e-16, ev=1e-14):
+        thetas = self.kinematics.IK(T_target, eomg, ev)
+        return thetas
 

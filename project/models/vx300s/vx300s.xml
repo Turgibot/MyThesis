@@ -15,6 +15,8 @@
         <mesh file="E.stl" />
         <mesh file="L.stl" />
         <mesh file="ZED.stl" scale="0.001 0.001 0.001"/>
+        <mesh file="shelves.stl" scale="0.01 0.01 0.01"/>
+
         
         <texture  name="floor_tile" file="meshes/floor_tile.png" width="3000" height="3000" type="2d"/>
         <material name="tile" texture="floor_tile" specular="0" shininess="0" reflectance="0" emission="1" />
@@ -42,7 +44,7 @@
         <body name="target" pos="0.45 0.2 0.1" mocap="true">
             <site name="target" type="sphere" size="0.02" rgba="1 0 0 .5"/>
         </body>
-        
+
         <body name="hand" pos="0 0 0" mocap="true"/>
         <geom name="floor_foam_block" euler="0 0 0" pos="0 0 0" size="0.5 0.5 0.05" type="plane" rgba="1 0.83 0.61 1" material="foam"/>
         

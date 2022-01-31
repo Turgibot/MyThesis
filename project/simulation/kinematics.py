@@ -9,11 +9,8 @@ This class contains the kinematic function needed to calculate the arms configur
 
 '''
 
-'''
-TODO 
-1. get data from robot instead - DONE
-2. IK
-'''
+
+from re import T
 import numpy as np
 import sympy as sp
 from sympy.matrices import Matrix, eye, zeros, ones, diag, GramSchmidt
@@ -162,6 +159,58 @@ class Kinematics:
             traj_list.append(Tstart+(i/sections)*Tdif)
         return traj_list
     
+    
+    def CartesianTrajectory(self, Tend, Tf, N, method):
+        t0 = self.robot.get_joints_pos()
+        M = self.robot.M
+        s_poe = self.robot.s_poe
+        Tstart = self.FK(M, s_poe, t0)
+        N = int(N)
+        timegap = Tf / (N - 1.0)
+        traj = [[None]] * N
+        Rstart, pstart = self.htm_to_rp(Tstart)
+        Rend, pend = self.htm_to_rp(Tend)
+        for i in range(N):
+            if method == 3:
+                s = self.CubicTimeScaling(Tf, timegap * i)
+            else:
+                s = self.QuinticTimeScaling(Tf, timegap * i)
+            traj[i] \
+            = np.r_[np.c_[np.dot(Rstart, \
+            self.skew_to_rot_mat(self.rot_to_skew(np.dot(np.array(Rstart).T,Rend)) * s)), \
+                    s * np.array(pend) + (1 - s) * np.array(pstart)], \
+                    [[0, 0, 0, 1]]]
+        return traj
+    def CubicTimeScaling(self, Tf, t):
+        """Computes s(t) for a cubic time scaling
+        :param Tf: Total time of the motion in seconds from rest to rest
+        :param t: The current time t satisfying 0 < t < Tf
+        :return: The path parameter s(t) corresponding to a third-order
+                polynomial motion that begins and ends at zero velocity
+        Example Input:
+            Tf = 2
+            t = 0.6
+        Output:
+            0.216
+        """
+        return 3 * (1.0 * t / Tf) ** 2 - 2 * (1.0 * t / Tf) ** 3
+
+    def QuinticTimeScaling(self, Tf, t):
+        """Computes s(t) for a quintic time scaling
+        :param Tf: Total time of the motion in seconds from rest to rest
+        :param t: The current time t satisfying 0 < t < Tf
+        :return: The path parameter s(t) corresponding to a fifth-order
+                polynomial motion that begins and ends at zero velocity and zero
+                acceleration
+        Example Input:
+            Tf = 2
+            t = 0.6
+        Output:
+            0.16308
+        """
+        return 10 * (1.0 * t / Tf) ** 3 - 15 * (1.0 * t / Tf) ** 4 \
+            + 6 * (1.0 * t / Tf) ** 5
+    
     # when using the newton raphson method a guess theta value is required as a starting point to find a local minima.
     # this sometimes results in failure to find a solution
     # if the desired EE configuration is close to the guess the method converges fastly.
@@ -171,23 +220,36 @@ class Kinematics:
     # this method iterates through a list of ordered configuration (from starting to desired configuration), each iteration the IK 
     # is calculated. At the last iteration the thetas are returned from the IK of the final configuration.
 
-    def trajectoryIK(self,T_target, w_err, v_err, sections):
+    def trajectoryIK(self,T_target, T_start,  w_err, v_err, sections):
         #current EE conf is the starting configuration
         t0 = self.robot.get_joints_pos()
         M = self.robot.M
         s_poe = self.robot.s_poe
-        Tstart = self.FK(M, s_poe, t0)
+        if T_start is None:
+            Tstart = self.FK(M, s_poe, t0)
 
         #get list of ordered transformation matrices from current EE config to desired one
         traj_list = self.trajectory(Tstart, T_target, sections)
-
         #calculate IK for each section. set the guess for the following section from the IK of the previous section
         for i in range(1, len(traj_list)):
             next_T = traj_list[i]
-            t0 = self.IK_space(s_poe, M, next_T, t0, w_err, v_err)[0]
-          
+            prev_t0 = t0.copy()
+            t0 = self.IK_space(s_poe, M, next_T, prev_t0, w_err, v_err)[0]
+            # for j in range(len(t0)):
+            #     t0[j]%=(2*np.pi)
+            #     if t0[j] > np.pi:
+            #        t0[j] -= 2*np.pi
+            #     elif t0[j] < -np.pi:
+            #        t0[j] += 2*np.pi
         return t0
-
+     
+    def IK(self, T_target, w_err, v_err):
+        #current EE conf is the starting configuration
+        t0 = self.robot.get_joints_pos()
+        M = self.robot.M
+        s_poe = self.robot.s_poe
+        return self.IK_space(s_poe, M, T_target, t0, w_err, v_err)[0]
+    
     def IK_space(self, s_poe, M, Tsd, t0, w_err, v_err, max_iter=20):
         
         i = 0

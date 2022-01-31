@@ -21,11 +21,11 @@ def main():
             print("conecting...")
         print("SUCCESS")
 
-    xml_path = "./project/models/vx300s/vx300s.xml"
+    xml_path = "./project/models/vx300s/vx300s_shelves.xml"
     scene = Mujocoation(xml_path, unity)
     robot = Robot(scene.model, scene.simulation)
     control = Control(robot, scene.simulation)
-    targets_pos = [[0.2, 0.4, 0.5], [0, 0, 0]]
+    targets_pos = [[0, 0.3, 0.34], [0, 0, 0]]
     robot.simulation.data.set_mocap_pos("target",  targets_pos[0])
     moore = StateMachine(robot, scene, control, targets_pos)
     while True:
