@@ -21,7 +21,9 @@ class Control:
         self.model = robot.model
         self.simulation = simulation
         self.kinematics = Kinematics(robot)
+        self.phase = 0
         self.theta_d = theta_d if theta_d is not None else np.array(self.robot.home)
+        self.final_theta_d = self.theta_d
         self.thetalist= np.array(self.theta_d)
         self.d = np.zeros(self.robot.n_joints)
         self.i = np.zeros(self.robot.n_joints)
@@ -44,15 +46,22 @@ class Control:
    
     #calculate the necessary velocity to drive each joint to a desired theta_d 
     def PID(self):
-               
+        if self.phase == 0:
+            self.kp = 0.5
+        elif self.phase == 1:
+            self.kp = 10
+        else:
+            self.kp = 2
+            
         err = np.subtract(self.theta_d, self.simulation.data.qpos[:])
         self.i = np.add(self.i, err)
         self.d = np.subtract(err,  self.prev_err)
         self.prev_err = np.copy(err)
         v = self.kp*err + self.ki*self.i + self.d*self.d
+        self.simulation.data.qvel[:] = v
+            
         u = -self.get_gravity_bias()[:]
         self.simulation.data.ctrl[:] = u
-        self.simulation.data.qvel[:] = v
 
     def get_gravity_bias(self):       
         """ Returns the effects of Coriolis, centrifugal, and gravitational forces """

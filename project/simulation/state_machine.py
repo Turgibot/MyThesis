@@ -10,7 +10,7 @@ This class solves the IK problem and creates a list of states.
 Each state is a dictionary of joint torques
 
 """
-import enum
+import random
 import numpy as np
 from sympy import N
 
@@ -100,7 +100,7 @@ class States:
     INIT = 0
     HOME = 100
     STEPS = 200
-    TARGET = 300
+    RETURN = 3000
     
 class SimpleStateMachine:
     def __init__(self, robot, scene, control, targets_pos=None) -> None:
@@ -122,14 +122,28 @@ class SimpleStateMachine:
                                             [0, 1, 0]])
         self.curr_state_configuration = []
         self.steps_positions = []
-        self.reached_th = 0.01
+        self.steps_thetas = []
+        self.reached_th = 0.02
         self.curr_state = States.INIT
         self.prev_state = States.INIT
         self.targets_counter = 0
         self.steps_counter = 0
-        self.num_steps = 10
+        self.num_steps = 100
         self.distance = 0
+        self.is_return = True
+        self.get_random_targets()
     
+    def get_random_targets(self):
+        self.curr_final_target[2] = self.curr_final_target[2]+0.05
+        y = self.curr_final_target[1]
+        z = self.curr_final_target[2]
+        num = 10
+        for i in range(num):
+            x = random.randrange(-30, 30, num)/100
+            if abs(x) >0.1:
+                self.targets.append([x,y,z])
+
+
     def next_state(self):
 
         # next state depending on current state and the distance between the EE to the current state target
@@ -140,19 +154,20 @@ class SimpleStateMachine:
         if self.curr_state == States.INIT:
             #set final target
             self.curr_final_target = self.targets[self.targets_counter]
-            #set step target and configuration
+            self.simulation.data.set_mocap_pos("target",  self.curr_final_target)
+            #set state target and configuration
             self.curr_state_target = self.robot.ee_home
             self.curr_state_configuration = self.control.FK(self.robot.home)
             #next state
             self.curr_state = States.HOME
+            self.steps_counter = 0
             #next time that the INIT state is reached move on to the next target
             self.targets_counter += 1
+            self.targets_counter %= len(self.targets)
         
         # primary condition to move to the next step is the distance to the current state target
         elif self.distance < self.reached_th:
             if self.curr_state == States.HOME:
-                # draw the target in its new location
-                self.simulation.data.set_mocap_pos("target",  self.curr_final_target)
                 # create the next states, positions
                 self.steps_positions = [] #empty list
                 curr_ee_pos = self.robot.get_ee_position()
@@ -165,21 +180,48 @@ class SimpleStateMachine:
             
             elif self.curr_state == States.STEPS+self.steps_counter:
                 self.steps_counter += 1
-                if self.steps_counter == self.num_steps:
-                    self.curr_state = States.TARGET
+                if self.steps_counter >= self.num_steps:
+                    if self.is_return:
+                        self.curr_state = States.RETURN
+                    else:
+                        self.curr_state = States.INIT
+                    self.steps_counter = 0
+                    self.is_return = not self.is_return
                 else:
                     self.set_step()
 
-            elif self.curr_state == States.TARGET:
-                self.curr_state = States.INIT
+            elif self.curr_state == States.RETURN:
+                self.steps_positions = [] #empty list
+                curr_ee_pos = self.robot.get_ee_position()
+                diff = self.robot.ee_home - curr_ee_pos 
+                for i in range(self.num_steps):
+                    self.steps_positions.append((curr_ee_pos+((i+1)/self.num_steps)*diff))
+                # set the next state as the steps
+                self.curr_state = States.STEPS 
+                self.set_step()
+                
+                # self.steps_counter -= 1
+                # if self.steps_counter <= int(self.num_steps*0.03):
+                #     self.curr_state = States.INIT
+                # else:
+                #     self.step_back()
+
 
     def output(self):
         #output is dependant of the current state
         if self.curr_state != self.prev_state:
-            if self.curr_state == States.HOME:
+            if self.curr_state == States.HOME or self.curr_state == States.INIT:
+                self.control.phase = 0
                 self.control.theta_d = self.robot.home
             else:
-                self.control.theta_d = self.control.IK(self.curr_state_configuration)
+                self.control.phase = 1
+                thetas = self.control.IK(self.curr_state_configuration)
+                self.steps_thetas.append(thetas)    
+                self.control.theta_d = thetas
+            
+            if self.steps_counter >= int(self.num_steps*0.93):
+                self.control.phase = 2
+            
             self.prev_state = self.curr_state
         
     def set_step(self):
@@ -187,7 +229,10 @@ class SimpleStateMachine:
         self.curr_state_configuration = np.r_[np.c_[self.target_orientation, self.curr_state_target], [[0,0,0,1]]]
         self.curr_state = States.STEPS + self.steps_counter
     
+    def step_back(self):
+        self.curr_state_target = self.steps_positions[self.steps_counter]
+        self.curr_state = States.RETURN + self.steps_counter
+
     def eval(self):
-        print(self.curr_state)
         self.next_state()
         self.output()
