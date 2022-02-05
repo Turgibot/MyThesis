@@ -4,7 +4,8 @@ import IK_multiple_targets as simulate
 import server
 
 #parameters
-with_unity = False
+with_unity = True
+# with_unity = False
 dev_mode = True
 # dev_mode = False
 
@@ -41,14 +42,13 @@ if __name__== "__main__":
     if not dev_mode:
         time.sleep(3)
     mujoco.start()
-   
 
     """
     --------------------------------------------------------------------------------
     joinn processes
     --------------------------------------------------------------------------------
     """
-    
+ 
     bridge.join()
     unity.join()
     mujoco.join()

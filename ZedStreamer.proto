@@ -13,6 +13,7 @@ message Image {
   int32 width = 1;
   int32 height = 2;
   bytes image_data = 3;
+  int64 timestamp = 4;
 }
 
 
@@ -20,6 +21,7 @@ message Depth {
   int32 width = 1;
   int32 height = 2;
   bytes image_data = 3;
+  int64 timestamp = 4;
 }
 
 message Received{

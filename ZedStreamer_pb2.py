@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x11ZedStreamer.proto\x12\x0bzedstreamer\":\n\x05Image\x12\r\n\x05width\x18\x01 \x01(\x05\x12\x0e\n\x06height\x18\x02 \x01(\x05\x12\x12\n\nimage_data\x18\x03 \x01(\x0c\":\n\x05\x44\x65pth\x12\r\n\x05width\x18\x01 \x01(\x05\x12\x0e\n\x06height\x18\x02 \x01(\x05\x12\x12\n\nimage_data\x18\x03 \x01(\x0c\"\x17\n\x08Received\x12\x0b\n\x03\x61\x63k\x18\x01 \x01(\x08\"\x16\n\x06Params\x12\x0c\n\x04\x64\x61ta\x18\x01 \x03(\x05\x32\xfb\x01\n\x0bZedStreamer\x12\x38\n\tSendImage\x12\x12.zedstreamer.Image\x1a\x15.zedstreamer.Received\"\x00\x12:\n\tSendVideo\x12\x12.zedstreamer.Image\x1a\x15.zedstreamer.Received\"\x00(\x01\x12:\n\tSendDepth\x12\x12.zedstreamer.Depth\x1a\x15.zedstreamer.Received\"\x00(\x01\x12:\n\nSendParams\x12\x13.zedstreamer.Params\x1a\x15.zedstreamer.Received\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\x11ZedStreamer.proto\x12\x0bzedstreamer\"M\n\x05Image\x12\r\n\x05width\x18\x01 \x01(\x05\x12\x0e\n\x06height\x18\x02 \x01(\x05\x12\x12\n\nimage_data\x18\x03 \x01(\x0c\x12\x11\n\ttimestamp\x18\x04 \x01(\x03\"M\n\x05\x44\x65pth\x12\r\n\x05width\x18\x01 \x01(\x05\x12\x0e\n\x06height\x18\x02 \x01(\x05\x12\x12\n\nimage_data\x18\x03 \x01(\x0c\x12\x11\n\ttimestamp\x18\x04 \x01(\x03\"\x17\n\x08Received\x12\x0b\n\x03\x61\x63k\x18\x01 \x01(\x08\"\x16\n\x06Params\x12\x0c\n\x04\x64\x61ta\x18\x01 \x03(\x05\x32\xfb\x01\n\x0bZedStreamer\x12\x38\n\tSendImage\x12\x12.zedstreamer.Image\x1a\x15.zedstreamer.Received\"\x00\x12:\n\tSendVideo\x12\x12.zedstreamer.Image\x1a\x15.zedstreamer.Received\"\x00(\x01\x12:\n\tSendDepth\x12\x12.zedstreamer.Depth\x1a\x15.zedstreamer.Received\"\x00(\x01\x12:\n\nSendParams\x12\x13.zedstreamer.Params\x1a\x15.zedstreamer.Received\"\x00\x62\x06proto3'
 )
 
 
@@ -54,6 +54,13 @@ _IMAGE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='timestamp', full_name='zedstreamer.Image.timestamp', index=3,
+      number=4, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -67,7 +74,7 @@ _IMAGE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=34,
-  serialized_end=92,
+  serialized_end=111,
 )
 
 
@@ -100,6 +107,13 @@ _DEPTH = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='timestamp', full_name='zedstreamer.Depth.timestamp', index=3,
+      number=4, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -112,8 +126,8 @@ _DEPTH = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=94,
-  serialized_end=152,
+  serialized_start=113,
+  serialized_end=190,
 )
 
 
@@ -144,8 +158,8 @@ _RECEIVED = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=154,
-  serialized_end=177,
+  serialized_start=192,
+  serialized_end=215,
 )
 
 
@@ -176,8 +190,8 @@ _PARAMS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=179,
-  serialized_end=201,
+  serialized_start=217,
+  serialized_end=239,
 )
 
 DESCRIPTOR.message_types_by_name['Image'] = _IMAGE
@@ -223,8 +237,8 @@ _ZEDSTREAMER = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=204,
-  serialized_end=455,
+  serialized_start=242,
+  serialized_end=493,
   methods=[
   _descriptor.MethodDescriptor(
     name='SendImage',

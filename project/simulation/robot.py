@@ -20,6 +20,9 @@ class Robot:
                 model,      # The mujoco xml generated model
                 simulation, # The mujoco simulation object
                 home_configuration = [-np.pi/2, -np.pi/2, 0.6*np.pi, np.pi/2, 0.1*np.pi, 0],
+
+                face_down_configuration = [-np.pi/2, 0, np.pi/2, np.pi/2, 0*np.pi, 0],
+                
                 front_configuration = [-np.pi/2, -0.713, 2.412, np.pi/2, 1.7, 0],
                 right_configuration = [-0.64350111, -1.47933899,  1.62545784,  2.50322626,  0.08747117,  0.11719468],
                 bottom_right_configuration = [-1.25*np.pi, 0.2*np.pi, 0.75*np.pi, 1.25*np.pi, 1.1*np.pi, 0],
@@ -30,9 +33,11 @@ class Robot:
         self.model = model
         self.simulation = simulation
         self.home = np.array(home_configuration)
+        self.ee_home = np.array([0, -0.05, 0.46])
+        self.face_down = np.array(face_down_configuration)
+        self.ee_face_down = np.array([0, 0.36, 0.267])
         self.front = np.array(front_configuration)
         self.ee_front = np.array([0, 0.3, 0.34])
-        self.ee_home = np.array([0, -0.05, 0.46])
         self.right = np.array(right_configuration)
         self.ee_right = np.array([0.2, 0, 0.5])
         self.bottom_right = np.array(bottom_right_configuration)
