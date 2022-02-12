@@ -21,7 +21,7 @@ class Robot:
                 simulation, # The mujoco simulation object
                 home_configuration = [-np.pi/2, -np.pi/2, 0.6*np.pi, np.pi/2, 0.1*np.pi, 0],
 
-                face_down_configuration = [-np.pi/2, 0, np.pi/2, np.pi/2, 0*np.pi, 0],
+                face_down_configuration = [-np.pi/2, 0, 0.4*np.pi, 0.5*np.pi, -0.1*np.pi, 0],
                 
                 front_configuration = [-np.pi/2, -0.713, 2.412, np.pi/2, 1.7, 0],
                 right_configuration = [-0.64350111, -1.47933899,  1.62545784,  2.50322626,  0.08747117,  0.11719468],

@@ -16,6 +16,10 @@
         <mesh file="L.stl" />
         <mesh file="ZED.stl" scale="0.001 0.001 0.001"/>
         <mesh file="shelves.stl" scale="0.015 0.01 0.015"/>
+        <mesh file="torus.stl" scale="0.002 0.002 0.002"/>
+        <mesh file="tetrahedron.stl" scale="0.001 0.001 0.001"/>
+        <mesh file="mug.stl" scale="0.0005 0.0005 0.0005"/>
+        <mesh file="spinner.stl" scale="0.001 0.001 0.002"/>
 
         
         <texture  name="floor_tile" file="meshes/floor_tile.png" width="3000" height="3000" type="2d"/>
@@ -100,9 +104,8 @@
                                                 </body>
                                                
                                         </body>
-                                        <body
-                                            name="EE" pos="0 -0.0075 0.1" euler="1.5708 1.5708 1.5708">
-                                            <site name="EE" type="sphere" size="0.02" rgba="0 1 0 .75"/>
+                                        <body name="EE" pos="0 -0.0075 0.1" euler="1.5708 1.5708 1.5708">
+                                            <!-- <site type="sphere" size="0.02" rgba="0 1 0 .75"/> -->
                                         </body>
                                 </body>
                             </body>
@@ -112,12 +115,10 @@
             </body>
         </body>
          <body name="target" pos="0 0.35 0.05" mocap="true">
-            <geom name="target" type="box" size="0.02 0.02 0.05" rgba="1 0 0 1"/>
-            <!-- <joint axis="1 0 0"/>
-            <joint axis="0 1 0"/>
-            <joint axis="0 0 1"/> -->
+            <geom type="box" size="0.02 0.02 0.02" pos="0 0 -0.03" rgba="0 1 0 1"/>
         </body>
 
+        
     </worldbody>
 
     <actuator>

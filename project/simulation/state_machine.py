@@ -130,7 +130,7 @@ class SimpleStateMachine:
         self.curr_state_configuration = []
         self.steps_positions = []
         self.steps_thetas = []
-        self.reached_th = 0.05
+        self.reached_th = 0.06
         self.curr_state = States.INIT
         self.prev_state = States.INIT
         self.targets_counter = 0
@@ -154,7 +154,7 @@ class SimpleStateMachine:
         z = self.curr_final_target[2]
         num = 100
         x = list(np.random.randint(low = -35,high=35,size=50))
-        rand_y = list(np.random.randint(low = 20,high=60,size=50))
+        rand_y = list(np.random.randint(low = 25,high=60,size=50))
         if self.orientation==0:
             for i in x:
                 if abs(i) >= 15:

@@ -1,13 +1,13 @@
 import os, time, sys
 import multiprocessing as mp
-import IK_multiple_targets as simulate
+import IK_multiple_targets_facing_table as simulate
 import server
 
 #parameters
 with_unity = True
 # with_unity = False
-dev_mode = True
-# dev_mode = False
+# dev_mode = True
+dev_mode = False
 
 lab_scene = 'unitybot.x86_64'
 

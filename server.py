@@ -135,8 +135,8 @@ class SimHandler():
                 spikes_frame = self.getSpikesFrom2Frames(prev_frame, frame, pos_th, neg_th).flatten()
                 shape = [int(x) for x in spikes_frame.shape]
                 colored_frame = np.zeros(shape=shape+[3], dtype="uint8")
-                colored_frame[spikes_frame==1] = [255, 0, 0] 
-                colored_frame[spikes_frame==-1] = [0, 0, 255] 
+                colored_frame[spikes_frame==-1] = [255, 0, 0] 
+                colored_frame[spikes_frame==1] = [0, 0, 255] 
                 colored_frame = colored_frame.reshape(src_shape)
                 cv2.imshow(name, colored_frame)
                 cv2.waitKey(1)
@@ -283,7 +283,7 @@ def run():
     p3 = mp.Process(target=handler.set_params, args=(params_child_con,sim_params))
     p4 = mp.Process(target=handler.show_depths, args=(depths_child_con,))
     p5 = mp.Process(target=handler.save_images_as_pkls, args=(save_child_con, sim_params))
-    p6 = mp.Process(target=handler.save_images_as_pkls, args=(save_depth_child_con, sim_params))
+    p6 = mp.Process(target=handler.save_depths_as_pkls, args=(save_depth_child_con, sim_params))
     
     #start processes
     
