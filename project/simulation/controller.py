@@ -10,6 +10,7 @@ Real robot has a builtin PID controller so the input is simply the joint values
 
 
 
+from turtle import st
 import numpy as np
 from .utilities import *
 from .kinematics import Kinematics
@@ -45,20 +46,21 @@ class Control:
 
    
     #calculate the necessary velocity to drive each joint to a desired theta_d 
-    def PID(self):
+    def PID(self, speed=100):
+        
         if self.phase == 0:
-            self.kp = 0.5
+            self.kp = 0.15
         elif self.phase == 1:
-            self.kp = 5
+            self.kp = 3
         else:
-            self.kp = 2
+            self.kp = 1
 
         err = np.subtract(self.theta_d, self.simulation.data.qpos[:])
         self.i = np.add(self.i, err)
         self.d = np.subtract(err,  self.prev_err)
         self.prev_err = np.copy(err)
         v = self.kp*err + self.ki*self.i + self.d*self.d
-        self.simulation.data.qvel[:] = v
+        self.simulation.data.qvel[:] = v*speed/100
             
         u = -self.get_gravity_bias()[:]
         self.simulation.data.ctrl[:] = u

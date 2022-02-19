@@ -49,7 +49,8 @@ class Analyzer:
                 frame = cv2.flip(frame, 0)
                 # cv2.putText(frame, fps, (7, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 1, cv2.LINE_AA)
                 cv2.imshow(name, frame)
-                cv2.waitKey(33)
+                if cv2.waitKey(25) == 27:
+                    break
                 curr_ts = image.timestamp
                 dt = curr_ts - prev_ts
                 prev_ts = curr_ts
@@ -225,7 +226,8 @@ class Analyzer:
                 print(e)
             if ts >= period:
                 cv2.imshow(name, mat)
-                cv2.waitKey(int(1000*period))
+                if cv2.waitKey(20) == 27:
+                    break
                 mat[:,:] = [0,0,0]
                 period += increment
             
@@ -247,7 +249,7 @@ if __name__ == "__main__":
     file = max(list_of_files, key=os.path.getctime).split('/')[1]
     
     analizer = Analyzer(in_folder=in_folder,out_folder=out_folder, unity=unity, file=file)
-    # analizer.play()
-    # analizer.create_spikes()
-    # analizer.create_txt()
+    analizer.play()
+    analizer.create_spikes()
+    analizer.create_txt()
     analizer.show_spikes()

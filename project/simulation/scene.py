@@ -52,7 +52,7 @@ class Mujocoation:
             self.viewer.render()
         else:
             qpos = self.simulation.data.qpos
-
+            #send data to unity
             # pos = numpy.ndarray(3*nmocap), quat = numpy.ndarray(4*nmocap)
             moc_pos = np.array(self.simulation.data.mocap_pos)
             moc_pos = moc_pos.reshape(len(moc_pos)*3)
@@ -60,7 +60,7 @@ class Mujocoation:
             moc_quat = moc_quat.reshape(len(moc_quat)*4)
             self.unity.setqpos(qpos)
             self.unity.setmocap(moc_pos, moc_quat)
-            time.sleep(0.002)
+            time.sleep(0.0005)
             
     def play(self, steps = 10e10):
         counter = 0

@@ -115,9 +115,8 @@
             </body>
         </body>
          <body name="target" pos="0 0.35 0.05" mocap="true">
-            <geom type="box" size="0.02 0.02 0.02" pos="0 0 -0.03" rgba="0 1 0 1"/>
+            <geom name="target" type="box" size="0.02 0.02 0.02" pos="0 0 -0.03" rgba="0 1 0 1"/>
         </body>
-
         
     </worldbody>
 

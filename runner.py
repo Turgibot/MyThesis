@@ -6,8 +6,8 @@ import server
 #parameters
 with_unity = True
 # with_unity = False
-# dev_mode = True
-dev_mode = False
+dev_mode = True
+# dev_mode = False
 
 lab_scene = 'unitybot.x86_64'
 
