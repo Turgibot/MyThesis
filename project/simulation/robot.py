@@ -10,6 +10,7 @@ This class is responsible for collecting read-only dynamic data from the robot s
 This data is then used to calculate forward and inverse kinematics.
 
 """
+from ntpath import join
 import numpy as np
 from .utilities import *
 import mujoco_py as mjc
@@ -19,16 +20,16 @@ class Robot:
     def __init__(self,
                 model,      # The mujoco xml generated model
                 simulation, # The mujoco simulation object
-                home_configuration = [-np.pi/2, -np.pi/2, 0.6*np.pi, np.pi/2, 0.1*np.pi, 0],
+                home_configuration = [-0.5*np.pi, 0, 0.5*np.pi, 0.5*np.pi, 0.5*np.pi, 0],
 
-                face_down_configuration = [-np.pi/2, 0, 0.4*np.pi, 0.5*np.pi, -0.1*np.pi, 0],
+                face_down_configuration = [-0.5*np.pi, 0, 0.5*np.pi, 0.5*np.pi, 0, 0],
                 
                 front_configuration = [-np.pi/2, -0.713, 2.412, np.pi/2, 1.7, 0],
                 right_configuration = [-0.64350111, -1.47933899,  1.62545784,  2.50322626,  0.08747117,  0.11719468],
                 bottom_right_configuration = [-1.25*np.pi, 0.2*np.pi, 0.75*np.pi, 1.25*np.pi, 1.1*np.pi, 0],
                 bottom_left_configuration = [0.25*np.pi, 0.2*np.pi, 0.75*np.pi, -0.25*np.pi, 1.1*np.pi, 0],
                 left_configuration = [-2.49809155, -1.47933899,  1.62545785,  0.63836639,  0.08747117, -0.11719467],
-                nap_configuration = [-0.5*np.pi, -0.61*np.pi, 1.025*np.pi, 0.5*np.pi, 0.38*np.pi, 0]
+                nap_configuration = [-0.5*np.pi, -0.6*np.pi, 1*np.pi, 0.5*np.pi, 0.4*np.pi, 0]
                 ):
         self.model = model
         self.simulation = simulation
@@ -91,6 +92,9 @@ class Robot:
 
         #poe in the space form
         self.s_poe = self.get_space_poe()
+
+        
+
         
     def get_space_poe(self):
         s0 = np.array(self.s_w0+self.s_v0)
@@ -164,3 +168,9 @@ class Robot:
     def get_joints_pos(self):
         self.thetas = self.simulation.data.qpos
         return self.thetas
+
+    
+
+
+
+

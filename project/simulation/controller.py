@@ -49,11 +49,11 @@ class Control:
     def PID(self, speed=100):
         
         if self.phase == 0:
-            self.kp = 0.15
+            self.kp = 0.5
         elif self.phase == 1:
-            self.kp = 3
+            self.kp = 5
         else:
-            self.kp = 1
+            self.kp = 2
 
         err = np.subtract(self.theta_d, self.simulation.data.qpos[:])
         self.i = np.add(self.i, err)

@@ -11,17 +11,18 @@ import glob
 import os
 
 class Analyzer:
-    def __init__(self, in_folder=None, out_folder=None, file=None, unity=None) -> None:
+    def __init__(self, in_folder=None, out_folder=None, file=None, unity=None, stereo=False) -> None:
         self.in_folder = in_folder
         self.out_folder = out_folder
         self.file = file
         self.unity = unity
+        self.stereo = stereo
     
     def play(self):
         name = "Stereo Camera Simulator"
         cv2.startWindowThread()
         cv2.namedWindow(name, cv2.WINDOW_AUTOSIZE)
-        pathlib.Path("unity_images").mkdir(parents=True, exist_ok=True)
+        pathlib.Path(self.unity).mkdir(parents=True, exist_ok=True)
         path = self.in_folder+"/"+self.file
         prev_ts = None
         ts = 0
@@ -34,7 +35,7 @@ class Analyzer:
                     print("End of recordings")
                     break
                 counter+=1
-                if counter < 3:
+                if counter <= 3:
                     continue
                 if prev_ts is None:
                     prev_ts = image.timestamp
@@ -48,6 +49,8 @@ class Analyzer:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 frame = cv2.flip(frame, 0)
                 # cv2.putText(frame, fps, (7, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 1, cv2.LINE_AA)
+                if not self.stereo:
+                    frame = frame[:, :image.width]
                 cv2.imshow(name, frame)
                 if cv2.waitKey(25) == 27:
                     break
@@ -55,7 +58,7 @@ class Analyzer:
                 dt = curr_ts - prev_ts
                 prev_ts = curr_ts
                 ts += dt
-                cv2.imwrite(self.unity+"/"+str(ts/10**9)+'.jpg', frame)
+                cv2.imwrite(self.unity+"/"+str(ts/10**10)+'.jpg', frame)
             cv2.destroyAllWindows()
 
     def create_spikes(self):
@@ -83,7 +86,7 @@ class Analyzer:
                         print("Done creating spikes")
                         break
                     counter+=1
-                    if counter<3:
+                    if counter <= 3:
                         continue    
                     curr_frame = np.array(list(image.image_data), dtype = np.uint8)
                     curr_frame = curr_frame.reshape((image.height*2, image.width, 3))
@@ -92,7 +95,8 @@ class Analyzer:
                     right = curr_frame[image.height:]
                     curr_frame = np.concatenate([left, right], axis=1)
                     curr_frame = cv2.flip(curr_frame, 0)
-
+                    if not self.stereo:
+                        curr_frame = curr_frame[:, :image.width]
                     if prev_frame is None:
                         prev_frame = curr_frame
                         start_time = image.timestamp
@@ -115,7 +119,10 @@ class Analyzer:
                     for x in range(delta_frame.shape[0]):
                         for y in range(delta_frame.shape[1]):
                             if title is None:
-                                title = (width*2, height)
+                                if self.stereo:
+                                    title = (width*2, height)
+                                else:
+                                    title = (width, height)
                                 spikes[-1].append(title)
                             p = 1 if delta_frame[x,y]>=pos_th else -1 if delta_frame[x,y]<= -neg_th else 0
                             if p == 0: continue
@@ -126,7 +133,7 @@ class Analyzer:
                                 addition = (i/res)*delta_time
                                 ts = prev_time+addition-start_time
                                 # ts = ts%10**11
-                                ts /= 10**9
+                                ts /= 10**10
                                 spike = (ts, x,y,p)
                                 # spike = "%9.6f %d %d %d\n"%(ts, x,y,p)
                                 spikes[ts].append(spike)
@@ -167,73 +174,79 @@ class Analyzer:
         print(counter)
             
     def create_txt(self):
-        read_path = self.out_folder+"/"+self.file+"-spikes"
-        write_path = read_path+".txt"
-        counter = 0
-        with open(read_path, 'rb') as f:
-            with open(write_path, 'w') as w:
-                while True:
-                    title = None
-                    try:
-                        spikes = pkl.load(f)
-                    except:
-                        print("Done exporting spikes in txt format")
-                        break
-                    keys = list(spikes.keys())
-                    if title is None:
-                        title = spikes[keys[0]]
-                        w.write(str(title[0][0])+" "+str(title[0][1])+"\n")
-                    for i in range(1, len(keys)):
-                        frame = keys[i]
-                        for spike in spikes[frame]:
-                            str_txt = str(spike[0])+" "+str(spike[2])+" "+str(spike[1])+" "+str(spike[3])+"\n"
-                            w.write(str_txt)
-                            
-        with open(write_path, "r") as f:
-            lines = f.readlines()
-        with open(write_path, "w") as f:
-            f.write(lines[0])
-            for line in lines:
-                if len(line.split())==4:
-                    f.write(line)            
+        try:
+            read_path = self.out_folder+"/"+self.file+"-spikes"
+            write_path = read_path+".txt"
+            counter = 0
+            with open(read_path, 'rb') as f:
+                with open(write_path, 'w') as w:
+                    while True:
+                        title = None
+                        try:
+                            spikes = pkl.load(f)
+                        except:
+                            print("Done exporting spikes in txt format")
+                            break
+                        keys = list(spikes.keys())
+                        if title is None:
+                            title = spikes[keys[0]]
+                            w.write(str(title[0][0])+" "+str(title[0][1])+"\n")
+                        for i in range(1, len(keys)):
+                            frame = keys[i]
+                            for spike in spikes[frame]:
+                                str_txt = str(spike[0])+" "+str(spike[2])+" "+str(spike[1])+" "+str(spike[3])+"\n"
+                                w.write(str_txt)
+                                
+            with open(write_path, "r") as f:
+                lines = f.readlines()
+            with open(write_path, "w") as f:
+                f.write(lines[0])
+                for line in lines:
+                    if len(line.split())==4:
+                        f.write(line)            
+        except:
+            print("Failed creating text for "+write_path)
        
     def show_spikes(self):
-        read_path = self.out_folder+"/"+self.file+"-spikes.txt"
-        name = "Event camera simulator"
-        with open(read_path, 'r') as f:
-            lines = f.readlines()
-        params = lines[0].split()
-        width = int(params[0])
-        height = int(params[1])
-        period = 0.02
-        increment = period
-        mat = np.zeros(shape=(height,width, 3), dtype=np.uint8)
-        for i in range(1, len(lines)):
-            try:
-                data = lines[i].split(" ")
-                if len(data) == 4:
-                    ts = float(data[0])
-                    x = int(data[2])
-                    y = int(data[1])
-                    p = int(data[3])
-                    color = [255, 0, 0] if p==1 else [0, 0, 255] if p ==-1 else [0, 0, 0] 
-                    mat[x][y] = color
-                else:
-                    print(i)
-            except Exception as e:
-                print(x, y)
-                print("shape",mat.shape)
-                print(e)
-            if ts >= period:
-                cv2.imshow(name, mat)
-                if cv2.waitKey(20) == 27:
-                    break
-                mat[:,:] = [0,0,0]
-                period += increment
-            
-        cv2.destroyAllWindows()
-        print("End of the fireworks show")
-
+        try:
+            read_path = self.out_folder+"/"+self.file+"-spikes.txt"
+            name = "Event camera simulator"
+            with open(read_path, 'r') as f:
+                lines = f.readlines()
+            params = lines[0].split()
+            width = int(params[0])
+            height = int(params[1])
+            period = 0.02
+            increment = period
+            mat = np.zeros(shape=(height,width, 3), dtype=np.uint8)
+            for i in range(1, len(lines)):
+                try:
+                    data = lines[i].split(" ")
+                    if len(data) == 4:
+                        ts = float(data[0])
+                        x = int(data[2])
+                        y = int(data[1])
+                        p = int(data[3])
+                        color = [255, 0, 0] if p==1 else [0, 0, 255] if p ==-1 else [0, 0, 0] 
+                        mat[x][y] = color
+                    else:
+                        print(i)
+                except Exception as e:
+                    print(x, y)
+                    print("shape",mat.shape)
+                    print(e)
+                if ts >= period:
+                    cv2.imshow(name, mat)
+                    if cv2.waitKey(20) == 27:
+                        break
+                    mat[:,:] = [0,0,0]
+                    period += increment
+                
+            cv2.destroyAllWindows()
+            print("End of the fireworks show")
+        except:
+            print("Failed reading fireworks text for "+read_path)
+       
     def wrap_it_up_as_h5(self):
         list_of_files = glob.glob(self.out_folder+'/*.txt') 
         txt_file = max(list_of_files, key=os.path.getctime).split('/')[1]
@@ -246,10 +259,17 @@ if __name__ == "__main__":
     out_folder =  "spikes_output"
     unity = "unity_images"
     list_of_files = glob.glob(in_folder+'/*') 
-    file = max(list_of_files, key=os.path.getctime).split('/')[1]
-    
-    analizer = Analyzer(in_folder=in_folder,out_folder=out_folder, unity=unity, file=file)
-    analizer.play()
-    analizer.create_spikes()
-    analizer.create_txt()
-    analizer.show_spikes()
+    counter = 0
+    # file = max(list_of_files, key=os.path.getctime).split('/')[1]
+    for path in list_of_files:
+        counter+=1
+        if counter < 13:
+            continue
+        file = path.split('/')[1]
+        analizer = Analyzer(in_folder=in_folder,out_folder=out_folder, unity=unity+"/"+str(counter), file=file, stereo=False)
+        analizer.play()
+        analizer.create_spikes()
+        analizer.create_txt()
+        analizer.show_spikes()
+        
+        

@@ -77,33 +77,31 @@
                         <body name="link4" pos="0 -0.1995 0.0">
                         <inertial pos="0 -0.0038 0.00" mass="0.414823" euler="1.5708 0 1.5708" diaginertia="0.175 0.175 0.175"/>
                         <joint name='joint3' pos="0 -0.0038 0.00" axis="0 1 0" ref="-1.5708"/>
-                        <geom name="link4" type="mesh" mesh="Link3" pos="0 0 0" euler="1.5708 0 1.5708" material="dark_gray"/>
+                        <geom name="link4" type="mesh" mesh="Link3" pos="0 0 0" euler="1.5708 0 -1.5708" material="dark_gray"/>
                     
                             <body name="link5" pos="0 -0.104 -0.005">
                                 <inertial pos="0.00 0.00 0.00475" mass="0.115395" euler="0 0 0" diaginertia="0.175 0.175 0.175"/>
                                 <joint name='joint4' pos="0.00 0.00 0.00475" axis="1 0 0" ref="0"/>
                                 <geom name="link5" type="mesh" mesh="Link4" pos="0 0 0" euler="0 0 0" material="dark_gray"/>
-                                    
+                                     <body name="zed" pos="0 -0.08 0.065" euler="1.4 0 1.5708">  
+                                            <geom name="zed" type="mesh" mesh="ZED" pos="0 0 0"  material="gray"/>
+                                            <inertial pos="0 0 0" mass="0.159"  diaginertia="0.025 0.025 0.025"/>
+                                               
+                                                <body name="left_cam" pos="0.02 0.06 0" >
+                                                    <site  type="sphere" size="0.01" rgba="0 0 1 1" />
+                                                </body>
+                                                 <body name="right_cam" pos="0.02 -0.06 0" >
+                                                    <site  type="sphere" size="0.01" rgba="0 0 1 1" />
+                                                </body>
+                                               
+                                        </body>
                                     <body name="link6" pos="0 0.0075 0.05525">
                                     <inertial pos="0 0 0" mass="0.1666" euler="-1.5708 0 0" diaginertia="0.025 0.025 0.025"/>
                                     <joint name='joint5' pos="0 0 0" axis="0 0 1" ref="0"/>
                                     <geom name="link6" type="mesh" mesh="Gripper" pos="0 0 0" euler="-1.5708 0 0" material="dark_gray"/>
                                         
                                         
-                                        <body name="zed" pos="0 -0.08 0" euler="1.4 0 1.5708">  
-                                            <geom name="zed" type="mesh" mesh="ZED" pos="0 0 0"  material="gray"/>
-                                            <inertial pos="0 0 0" mass="0.159"  diaginertia="0.025 0.025 0.025"/>
-                                               
-                                                <body name="left_cam" pos="0.02 0.06 0" >
-                                                    <camera name="left_cam" fovy="45"  euler="0 -1.5708 -1.5708" />
-                                                    <site  type="sphere" size="0.01" rgba="0 0 1 1" />
-                                                </body>
-                                                 <body name="right_cam" pos="0.02 -0.06 0" >
-                                                    <camera name="right_cam" fovy="45"  euler="0 -1.5708 -1.5708" />
-                                                    <site  type="sphere" size="0.01" rgba="0 0 1 1" />
-                                                </body>
-                                               
-                                        </body>
+                                       
                                         <body name="EE" pos="0 -0.0075 0.1" euler="1.5708 1.5708 1.5708">
                                             <!-- <site type="sphere" size="0.02" rgba="0 1 0 .75"/> -->
                                         </body>

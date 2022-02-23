@@ -142,18 +142,24 @@ class SimHandler():
                         
             prev_frame = frame.copy()
             del image
+
     def save_images_as_pkls(self, conn, sim_params):
         while sim_params[0]==-1:
             pass
-           
         dir_name = "pickle_output"
         pathlib.Path(dir_name).mkdir(parents=True, exist_ok=True)
-        with open("{}/{}_{}_".format(dir_name, sim_params[0],sim_params[1])+datetime.now().strftime("%d%m%Y_%H%M%S"), 'wb') as f:        
-            while True:
+        while True:
+            if sim_params[2]==1 and sim_params[3]==1:
+                with open("{}/{}_{}_".format(dir_name, sim_params[0],sim_params[1])+datetime.now().strftime("%d%m%Y_%H%M%S"), 'wb') as f:
+                    while sim_params[3]==1:
+                        image = conn.recv()
+                        pkl.dump(image, f, pkl.HIGHEST_PROTOCOL)
+                        del image
+            else:
                 image = conn.recv()
-                if sim_params[3]==1: 
-                    pkl.dump(image, f, pkl.HIGHEST_PROTOCOL)
                 del image
+            
+            
         
     
     def save_depths_as_pkls(self, conn, sim_params):
@@ -161,11 +167,15 @@ class SimHandler():
             pass
         dir_name = "pickle_depth_output"
         pathlib.Path(dir_name).mkdir(parents=True, exist_ok=True)
-        with open("{}/{}_{}_".format(dir_name, sim_params[0],sim_params[1])+datetime.now().strftime("%d%m%Y_%H%M%S"), 'wb') as f:        
-            while True:
+        while True:
+            if sim_params[2]==1 and sim_params[3]==1:
+                with open("{}/{}_{}_".format(dir_name, sim_params[0],sim_params[1])+datetime.now().strftime("%d%m%Y_%H%M%S"), 'wb') as f:
+                    while sim_params[3]==1:
+                        image = conn.recv()
+                        pkl.dump(image, f, pkl.HIGHEST_PROTOCOL)
+                        del image
+            else:
                 image = conn.recv()
-                if sim_params[3]==1:  
-                    pkl.dump(image, f, pkl.HIGHEST_PROTOCOL)
                 del image
 
         
@@ -251,15 +261,16 @@ def startServer(images, sim_params, zed_conn, spikes_conn, params_parent_con, de
 manager = mp.Manager()
 zed_images = manager.list()
 sim_params = manager.list()
+sim_positions = manager.list()
 
 
 
 def run():
     # list of global params
-    for _ in range(10):
+    for _ in range(11):
         sim_params.append(0)
+        sim_positions.append(0)
 
-   
     # handles data from server
     handler = SimHandler()
 
@@ -270,6 +281,7 @@ def run():
     depths_parent_con, depths_child_con = mp.Pipe()
     save_parent_con, save_child_con = mp.Pipe()
     save_depth_parent_con, save_depth_child_con = mp.Pipe()
+    arm_parent_con, arm_child_con = mp.Pipe()
 
     # this process is the actual server that listens to unity
     
@@ -283,7 +295,8 @@ def run():
     p4 = mp.Process(target=handler.show_depths, args=(depths_child_con,))
     p5 = mp.Process(target=handler.save_images_as_pkls, args=(save_child_con, sim_params))
     p6 = mp.Process(target=handler.save_depths_as_pkls, args=(save_depth_child_con, sim_params))
-    p7 = mp.Process(target=simulate.run, args=(True, sim_params))
+    p7 = mp.Process(target=simulate.run, args=(True, sim_params, sim_positions))
+    p8 = mp.Process(target=simulate.activate_arm, args=(sim_positions, ))
     
     #start processes
     
@@ -295,6 +308,7 @@ def run():
     p5.start()
     p6.start()
     p7.start()
+    p8.start()
    
     #join all
     
@@ -306,6 +320,7 @@ def run():
     p5.join()
     p6.join()
     p7.join()
+    p8.join()
    
 
 if __name__ == "__main__":
