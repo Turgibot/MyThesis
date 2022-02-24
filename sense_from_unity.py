@@ -33,25 +33,28 @@ def run(with_unity=True, sim_params=None, sim_positions=None):
             control.PID()
             scene.show_step()
             print(robot.get_joints_pos())
-    arm = RoboticArm
+    
     while True:
-        if sceneChangeCounter != sim_params[10]:
-            pos = [sim_params[5]/100, sim_params[6]/100, sim_params[7]/100]
-            moore.set_external_target(pos)
-            moore.curr_state = States.INIT
-            sceneChangeCounter = sim_params[10]
-
-        if sim_params[2] == 1:
-            moore.eval()
-            # try while sceneChangeCounter = sim_params[10] : pass
+        if sim_params[9] == 1:
+            control.theta_d = robot.nap
         else:
-            control.theta_d = robot.get_joints_pos()
-            
-        if sceneChangeCounter != sim_params[10]:
-            pos = [sim_params[5]/100, sim_params[6]/100, sim_params[7]/100]
-            moore.set_external_target(pos)
-            moore.curr_state = States.INIT
-            sceneChangeCounter = sim_params[10]
+            if sceneChangeCounter != sim_params[10]:
+                pos = [sim_params[5]/100, sim_params[6]/100, sim_params[7]/100]
+                moore.set_external_target(pos)
+                moore.curr_state = States.INIT
+                sceneChangeCounter = sim_params[10]
+
+            if sim_params[2] == 1:
+                moore.eval()
+                # try while sceneChangeCounter = sim_params[10] : pass
+            else:
+                control.theta_d = moore.start_config
+                
+            if sceneChangeCounter != sim_params[10]:
+                pos = [sim_params[5]/100, sim_params[6]/100, sim_params[7]/100]
+                moore.set_external_target(pos)
+                moore.curr_state = States.INIT
+                sceneChangeCounter = sim_params[10]
 
         control.PID(speed=sim_params[4])
         scene.show_step()

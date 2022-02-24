@@ -30,8 +30,8 @@ class Control:
         self.i = np.zeros(self.robot.n_joints)
         self.prev_err = np.subtract(self.theta_d, self.simulation.data.qpos[:])
         self.kp = 0.5
-        self.ki = 0.00000001
-        self.kd = 0.1
+        self.ki = 0.0
+        self.kd = 0.0
         
         
 # -----------------------------------------------------------------------------
@@ -49,7 +49,7 @@ class Control:
     def PID(self, speed=100):
         
         if self.phase == 0:
-            self.kp = 0.5
+            self.kp = 1
         elif self.phase == 1:
             self.kp = 5
         else:

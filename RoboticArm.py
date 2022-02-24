@@ -170,8 +170,14 @@ class RoboticArm:
                 self.send_single_cmd(ID, 
                                self.CMD['Operating mode']['Address'], 
                                self.CMD['Operating mode']['Value']['Position'])
-
-            
+            if ID <=5:
+                self.send_full_cmd(ID, 
+                               84, 
+                               500)
+            else:
+                self.send_full_cmd(ID, 
+                               84, 
+                               200)
         
         # Limiting velocity
         print('Limiting velocity to: {}%'.format(100*(self.CMD['Limit velocity']['Value']/885)))
@@ -475,7 +481,7 @@ class RoboticArm:
         return adjustmets
 
     def set_position_from_sim(self, sim_positions):
-        print("Sim : ", self.map_to_angles(sim_positions))
-        print("Real: ", self.map_sim_to_real(sim_positions) )
-        print("Adju: ", self.map_adjustments() )
+        # print("Sim : ", self.map_to_angles(sim_positions))
+        # print("Real: ", self.map_sim_to_real(sim_positions) )
+        # print("Adju: ", self.map_adjustments() )
         self.set_position(self.map_sim_to_real(sim_positions))

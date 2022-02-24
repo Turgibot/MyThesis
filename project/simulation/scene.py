@@ -60,7 +60,7 @@ class Mujocoation:
             moc_quat = moc_quat.reshape(len(moc_quat)*4)
             self.unity.setqpos(qpos)
             self.unity.setmocap(moc_pos, moc_quat)
-            time.sleep(0.002)
+            time.sleep(0.001)
             
     def play(self, steps = 10e10):
         counter = 0
